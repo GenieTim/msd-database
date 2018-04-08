@@ -105,7 +105,7 @@ class Substance {
     }
 
     public function setFormula($formula): self {
-        $this->formula = $formula;
+        $this->formula = trim($formula, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
 
         return $this;
     }
