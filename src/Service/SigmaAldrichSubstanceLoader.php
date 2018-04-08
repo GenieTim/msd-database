@@ -27,6 +27,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
     private $logger;
     protected $COOKIE = "Cookie: SialLocaleDef=CountryCode~CH|WebLang~-3|; country=SWISC; Cck=present&dtPC=-; dtLatC=332";
 
+    const TRIM_CHARACTERS = " \t\n\r\0\x0B\xc2\xa0";
     const URL = "https://www.sigmaaldrich.com";
 
     public function __construct(EntityManagerInterface $em, LoggerInterface $logger) {
@@ -137,7 +138,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         }
         $dataCrawler = $productInfo->filter('ul.clearfix li p');
         $dataCrawler->each(function(Crawler $node, $i) use ($substance) {
-            $test = strtolower(trim($node->text()));
+            $test = strtolower(trim($node->text(), self::TRIM_CHARACTERS));
             switch (true) {
                 case $this->stringStartsWith("cas number", $test):
                     $substance->setCASNumber($node->filter('a')->text());
@@ -146,6 +147,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
                     $substance->setPubchemId($node->filter('span')->text());
                     break;
                 case $this->stringStartsWith("linear formula", $test):
+                case $this->stringStartsWith("empirical formula", $test):
                     $substance->setFormula($node->filter('span')->text());
                     break;
                 default:
@@ -160,8 +162,11 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         }
     }
 
-    protected function stringStartsWith($start, $string) {
-        $this->logger->info("Checking '$start' against '$string'");
+    public static function stringStartsWith($start, $string) {
+        // trimming not really necessary anymore
+        $string = trim(strtolower($string), self::TRIM_CHARACTERS);
+        $start = trim(strtolower($start), self::TRIM_CHARACTERS);
+//        $this->logger->info("Checking '$start' against '$string'");
         return substr($string, 0, strlen($start)) === $start;
     }
 
@@ -177,21 +182,21 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         }
         $symbols = explode(',', self::extractText($safetyCrawler, '.safetyRight#Symbol'));
         array_walk($symbols, function (&$symbol) {
-            $symbol = $this->getSymbol(trim($symbol));
+            $symbol = $this->getSymbol(trim($symbol, self::TRIM_CHARACTERS));
         });
         $substance->setSymbols($symbols);
         $substance->setSignalWord(self::extractText($safetyCrawler, '.safetyRight span.warningLabel'));
         $substance->setRidadr(self::extractText($safetyCrawler, '.safetyRight#RIDADR'));
         $substance->setWgkGermany(self::extractText($safetyCrawler, '.safetyRight#WGK\ Germany'));
-        $p_statements = explode('-', self::extractText($safetyCrawler, '.safetyRight#Precautionary\ statements'));
-        array_walk($p_statements, function (&$statement) {
-            $statement = $this->getStatement(trim($statement));
+        $statements = self::extractText($safetyCrawler, '.safetyRight[id="Precautionary statements"]') . self::extractText($safetyCrawler, '.safetyRight[id="Hazard statements"]');
+        if (!$statements || trim($statements, self::TRIM_CHARACTERS) == "") {
+            $this->logger->warning("no statements found");
+        }
+        $all_statements = preg_split('/(-|-|–)+/', $statements);
+        array_walk($all_statements, function (&$statement) {
+            $statement = $this->getStatement(trim($statement, self::TRIM_CHARACTERS));
         });
-        $h_statements = explode('-', self::extractText($safetyCrawler, '.safetyRight#Hazard\ statements'));
-        array_walk($h_statements, function (&$statement) {
-            $statement = $this->getStatement(trim($statement));
-        });
-        $substance->setStatements(array_merge($p_statements, $h_statements));
+        $substance->setStatements($all_statements);
     }
 
     public static function extractText(Crawler $crawler, string $selector) {

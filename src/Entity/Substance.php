@@ -6,6 +6,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Service\SigmaAldrichSubstanceLoader;
+
 /**
  * @ORM\Entity(repositoryClass="App\Repository\SubstanceRepository")
  * @ORM\Table(indexes={
@@ -93,7 +95,7 @@ class Substance {
     }
 
     public function setName($name): self {
-        $this->name = trim($name);
+        $this->name = trim($name, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
 
         return $this;
     }
@@ -206,7 +208,7 @@ class Substance {
     }
 
     public function setRidadr($ridadr): self {
-        $this->ridadr = trim($ridadr);
+        $this->ridadr = trim($ridadr, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
 
         return $this;
     }
@@ -216,7 +218,7 @@ class Substance {
     }
 
     public function setWgkGermany($wgk_germany): self {
-        if ($wgk_germany && trim($wgk_germany) !== "") {
+        if ($wgk_germany && trim($wgk_germany, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== "") {
             $this->wgk_germany = intval($wgk_germany);
         }
 
@@ -228,7 +230,7 @@ class Substance {
     }
 
     public function setRtecs($rtecs): self {
-        $this->rtecs = trim($rtecs);
+        $this->rtecs = trim($rtecs, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
 
         return $this;
     }

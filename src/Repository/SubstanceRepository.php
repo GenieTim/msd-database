@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Substance;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
+use App\Service\SigmaAldrichSubstanceLoader;
 
 /**
  * @method Substance|null find($id, $lockMode = null, $lockVersion = null)
@@ -26,7 +27,7 @@ class SubstanceRepository extends ServiceEntityRepository
                 ->orWhere('s.formula = :val')
                 ->orWhere('s.name LIKE :val')
                 ->orWhere('s.pubchem_id = :val')
-            ->setParameter('val', $search)
+            ->setParameter('val', trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS))
             ->orderBy('s.id', 'ASC')
             ->setMaxResults(1)
             ->getQuery()

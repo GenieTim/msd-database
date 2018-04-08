@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
+use App\Service\SigmaAldrichSubstanceLoader;
+
 /**
  * @ORM\Entity(repositoryClass="App\Repository\SymbolRepository")
  */
@@ -38,7 +40,7 @@ class Symbol
 
     public function setName(string $name): self
     {
-        $this->name = trim($name);
+        $this->name = trim($name, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
 
         return $this;
     }
