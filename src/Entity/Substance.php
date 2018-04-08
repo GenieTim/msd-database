@@ -8,6 +8,12 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\SubstanceRepository")
+ * @ORM\Table(indexes={
+ *      @ORM\Index(name="substance_name_idx", columns={"name"}),
+ *      @ORM\Index(name="substance_formula_idx", columns={"formula"}),
+ *      @ORM\Index(name="substance_cas_idx", columns={"cas_number"}),
+ *      @ORM\Index(name="substance_pubchem_idx", columns={"pubchem_id"})
+ * })
  */
 class Substance {
 
@@ -82,31 +88,31 @@ class Substance {
         return $this->id;
     }
 
-    public function getName(): string {
+    public function getName() {
         return $this->name;
     }
 
-    public function setName(string $name): self {
-        $this->name = $name;
+    public function setName($name): self {
+        $this->name = trim($name);
 
         return $this;
     }
 
-    public function getFormula(): string {
+    public function getFormula() {
         return $this->formula;
     }
 
-    public function setFormula(string $formula): self {
+    public function setFormula($formula): self {
         $this->formula = $formula;
 
         return $this;
     }
 
-    public function getPubchemId(): int {
+    public function getPubchemId() {
         return $this->pubchem_id;
     }
 
-    public function setPubchemId(int $pubchem_id): self {
+    public function setPubchemId($pubchem_id): self {
         $this->pubchem_id = $pubchem_id;
 
         return $this;
@@ -129,8 +135,11 @@ class Substance {
     }
 
     public function setSymbols(array $symbols): self {
-        $this->symbols = new ArrayColllection($symbols);
-
+        $this->symbols = new ArrayCollection();
+        foreach ($symbols as $symbol) {
+            $this->addSymbol($symbol);
+        }
+        
         return $this;
     }
 
@@ -150,11 +159,11 @@ class Substance {
         return $this;
     }
 
-    public function getSignalWord(): string {
+    public function getSignalWord() {
         return $this->signal_word;
     }
 
-    public function setSignalWord(string $signal_word): self {
+    public function setSignalWord($signal_word): self {
         $this->signal_word = $signal_word;
 
         return $this;
@@ -168,7 +177,10 @@ class Substance {
     }
 
     public function setStatements(array $statements): self {
-        $this->statements = new ArrayCollection($statements);
+        $this->statements = new ArrayCollection();
+        foreach ($statements as $statement) {
+            $this->addStatement($statement);
+        }
 
         return $this;
     }
@@ -193,8 +205,8 @@ class Substance {
         return $this->ridadr;
     }
 
-    public function setRidadr(string $ridadr): self {
-        $this->ridadr = $ridadr;
+    public function setRidadr($ridadr): self {
+        $this->ridadr = trim($ridadr);
 
         return $this;
     }
@@ -203,8 +215,10 @@ class Substance {
         return $this->wgk_germany;
     }
 
-    public function setWgkGermany(int $wgk_germany): self {
-        $this->wgk_germany = $wgk_germany;
+    public function setWgkGermany($wgk_germany): self {
+        if ($wgk_germany && trim($wgk_germany) !== "") {
+            $this->wgk_germany = intval($wgk_germany);
+        }
 
         return $this;
     }
@@ -213,8 +227,8 @@ class Substance {
         return $this->rtecs;
     }
 
-    public function setRtecs(string $rtecs): self {
-        $this->rtecs = $rtecs;
+    public function setRtecs($rtecs): self {
+        $this->rtecs = trim($rtecs);
 
         return $this;
     }

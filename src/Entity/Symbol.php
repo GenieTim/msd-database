@@ -38,12 +38,12 @@ class Symbol
 
     public function setName(string $name): self
     {
-        $this->name = $name;
+        $this->name = trim($name);
 
         return $this;
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return $this->description;
     }

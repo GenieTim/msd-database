@@ -23,7 +23,9 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
     private $em;
     private $statement_repo;
     private $signal_repo;
+    private $substance_repo;
     private $logger;
+    protected $COOKIE = "Cookie: SialLocaleDef=CountryCode~CH|WebLang~-3|; country=SWISC; Cck=present&dtPC=-; dtLatC=332";
 
     const URL = "https://www.sigmaaldrich.com";
 
@@ -31,6 +33,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         $this->em = $em;
         $this->logger = $logger;
         $this->signal_repo = $em->getRepository(Symbol::class);
+        $this->substance_repo = $em->getRepository(Substance::class);
         $this->statement_repo = $em->getRepository(Statement::class);
     }
 
@@ -40,14 +43,19 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @return type
      */
     public function loadSubstance(string $search) {
-        $substance = $this->em->getRepository(Substance::class)->findByAny($search);
+        $substance = $this->substance_repo->findByAny($search);
         if (!$substance) {
-            $possibleSubstances = $this->loadSearchResults($search);
+            $possibleSubstances = $this->loadProductResults($search);
             // TODO: check others than just first
             if (count($possibleSubstances)) {
-                $substance = $this->loadSubstanceFromUri($this->normalizeUri($possibleSubstances[0]));
-                $this->em->persist($substance);
-                $this->em->flush();
+                foreach ($possibleSubstances as $attempt) {
+                    $substance = $this->loadSubstanceFromUri($this->normalizeUri($possibleSubstances[0]));
+                    // check again for duplicates as the name could vary from the search
+                    if (!$this->substance_repo->findOneByName($substance->getName())) {
+                        $this->em->persist($substance);
+                        $this->em->flush();
+                    }
+                }
             } else {
                 $this->logger->warning('no results found in search for ' . $search);
             }
@@ -71,9 +79,33 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
             'results' => $results->count()
         ));
         $found = $results->each(function (Crawler $node, $i) {
-            $this->logger->info('Crawler node ' . $i);
             return $node->attr('href');
         });
+        return $found;
+    }
+
+    /**
+     * Load all links of results of a sigma-aldrich search
+     * 
+     * @param string $search
+     * @return array
+     */
+    protected function loadProductResults(string $search): array {
+        $search = urlencode($search);
+        $url = "https://www.sigmaaldrich.com/catalog/search?term=$search&interface=ALL&N=0&mode=match+partialmax&lang=de&region=CH&focus=product"; //&focus=buildingblocks or &focus=products
+        $content = $this->curl($url);
+        $resultCrawler = new Crawler($content);
+        $results = $resultCrawler->filter('.productContainer .product-listing-outer .productNumberValue a');
+        $this->logger->info('Results', array(
+            'url' => $url,
+            'results' => $results->count()
+        ));
+        $found = $results->each(function (Crawler $node, $i) {
+            return $node->attr('href');
+        });
+        if (!count($found)) {
+            return $this->loadSearchResults($search);
+        }
         return $found;
     }
 
@@ -84,9 +116,9 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @return Substance
      */
     protected function loadSubstanceFromUri(string $uri): Substance {
-        $resultCrawler = new Crawler($this->curl($uri));
+        $result = $this->curl($uri . "?lang=de&region=CH");
+        $resultCrawler = new Crawler($result);
         $substance = new Substance();
-        var_dump($resultCrawler->html());
         $this->setSubstanceInfo($substance, $resultCrawler->filter('.productInfo'));
         $this->setSubstanceSds($substance, $resultCrawler->filter('.safetyBox'));
         $substance->setSource($uri);
@@ -100,20 +132,37 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @param Crawler $productInfo
      */
     protected function setSubstanceInfo(Substance &$substance, Crawler $productInfo) {
-        // TODO: do not hardcode info position
-        var_dump($productInfo->html());
-        $dataCrawler = $productInfo->filter('ul.clearfix li p span');
-        var_dump($dataCrawler->html());
-        $substance->setCASNumber($dataCrawler->filter('a')->first()->text());
-        $substance->setFormula($dataCrawler->slice(1, 1)->text());
-        $substance->setPubchemId($dataCrawler->filter('a.External')->text());
+        if (!$productInfo->count()) {
+            throw new \RuntimeException("Product Info is empty");
+        }
+        $dataCrawler = $productInfo->filter('ul.clearfix li p');
+        $dataCrawler->each(function(Crawler $node, $i) use ($substance) {
+            $test = strtolower(trim($node->text()));
+            switch (true) {
+                case $this->stringStartsWith("cas number", $test):
+                    $substance->setCASNumber($node->filter('a')->text());
+                    break;
+                case $this->stringStartsWith("pubchem", $test):
+                    $substance->setPubchemId($node->filter('span')->text());
+                    break;
+                case $this->stringStartsWith("linear formula", $test):
+                    $substance->setFormula($node->filter('span')->text());
+                    break;
+                default:
+                    $this->logger->info('Unused information: ' . $test);
+            }
+        });
         $h1 = $productInfo->filter('h1');
         if ($h1->count()) {
             $substance->setName($h1->text());
         } else {
-            $this->logger->warning('set name to formula of Substance ' . $substance->getCASNumber());
-            $substance->setName($substance->getFormula());
+            $this->logger->warning('No name found for Substance ' . $substance->getCASNumber());
         }
+    }
+
+    protected function stringStartsWith($start, $string) {
+        $this->logger->info("Checking '$start' against '$string'");
+        return substr($string, 0, strlen($start)) === $start;
     }
 
     /**
@@ -123,23 +172,34 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @param Crawler $safetyCrawler
      */
     protected function setSubstanceSds(Substance &$substance, Crawler $safetyCrawler) {
-        $symbols = explode(',', $safetyCrawler->filter('.safetyRight#Symbol')->text());
+        if (!$safetyCrawler->count()) {
+            throw new \RuntimeException("Safety Info is empty");
+        }
+        $symbols = explode(',', self::extractText($safetyCrawler, '.safetyRight#Symbol'));
         array_walk($symbols, function (&$symbol) {
             $symbol = $this->getSymbol(trim($symbol));
         });
         $substance->setSymbols($symbols);
-        $substance->setSignalWord($safetyCrawler->filter('.safetyRight span.warningLabel')->text());
-        $substance->setRidadr($safetyCrawler->filter('.safetyRight#RIDADR')->text());
-        $substance->setWgkGermany($safetyCrawler->filter('.safetyRight#WGK\ Germany')->text());
-        $p_statements = explode('-', $safetyCrawler->filter('.safetyRight#Precautionary\ statements')->text());
+        $substance->setSignalWord(self::extractText($safetyCrawler, '.safetyRight span.warningLabel'));
+        $substance->setRidadr(self::extractText($safetyCrawler, '.safetyRight#RIDADR'));
+        $substance->setWgkGermany(self::extractText($safetyCrawler, '.safetyRight#WGK\ Germany'));
+        $p_statements = explode('-', self::extractText($safetyCrawler, '.safetyRight#Precautionary\ statements'));
         array_walk($p_statements, function (&$statement) {
             $statement = $this->getStatement(trim($statement));
         });
-        $h_statements = explode('-', $safetyCrawler->filter('.safetyRight#Hazard\ statements')->text());
+        $h_statements = explode('-', self::extractText($safetyCrawler, '.safetyRight#Hazard\ statements'));
         array_walk($h_statements, function (&$statement) {
             $statement = $this->getStatement(trim($statement));
         });
         $substance->setStatements(array_merge($p_statements, $h_statements));
+    }
+
+    public static function extractText(Crawler $crawler, string $selector) {
+        $filtered = $crawler->filter($selector);
+        if ($filtered->count()) {
+            return $filtered->text();
+        }
+        return NULL;
     }
 
     /**
@@ -169,7 +229,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         if (!$statement) {
             $statement = new Statement();
             $statement->setName($search);
-            switch (strtolower($search[0])) {
+            switch (strtolower(substr($search, 0, 1))) {
                 case 'p':
                     $statement->setType(Statement::TYPE_P);
                     break;
@@ -202,19 +262,39 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         }
     }
 
-    public function curl($url) {
+    protected function curl($url) {
         $this->logger->info("Curling $url");
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array("Cookie: SialLocaleDef=CountryCode~CH|WebLang~-3|"));
+        curl_setopt($ch, CURLOPT_ENCODING, '');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array($this->COOKIE));
         $return = curl_exec($ch);
-        if (!$return || $return == "") {
-            throw new \RuntimeException(curl_error($ch), curl_errno($ch));
+        if (!$return || trim($return) == "" || (is_array($return) && !count($return))) {
+//            throw new \RuntimeException(curl_error($ch), curl_errno($ch));
+            $this->logger->alert("cURL failed", array(curl_error($ch), curl_errno($ch), $return, error_get_last()));
+            $return = $this->getContents($url);
         }
         curl_close($ch);
-        $this->logger->info("website ($url) content", array('content' => $return));
+        $this->logger->info("website ($url) content:", array('content' => $return));
         return $return;
+    }
+
+    protected function getContents($url) {
+        // Create a stream
+        $opts = array(
+            'http' => array(
+                'method' => "GET",
+                'header' => "Accept-language: en\r\n" .
+                $this->COOKIE
+            )
+        );
+
+        $context = stream_context_create($opts);
+
+        // Open the file using the HTTP headers set above
+        $file = file_get_contents($url, false, $context);
+        return $file;
     }
 
 }
