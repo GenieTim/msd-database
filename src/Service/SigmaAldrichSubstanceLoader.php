@@ -47,7 +47,6 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         $substance = $this->substance_repo->findByAny($search);
         if (!$substance) {
             $possibleSubstances = $this->loadProductResults($search);
-            // TODO: check others than just first
             if (count($possibleSubstances)) {
                 foreach ($possibleSubstances as $attempt) {
                     $substance = $this->loadSubstanceFromUri($this->normalizeUri($possibleSubstances[0]));
@@ -74,14 +73,12 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         $url = "https://www.sigmaaldrich.com/catalog/search?interface=All&N=0+&mode=partialmax&term=$search&lang=de&region=CH&focus=buildingblocks"; //&focus=buildingblocks or &focus=products
         $content = $this->curl($url);
         $resultCrawler = new Crawler($content);
-        $results = $resultCrawler->filter('#searchBasedNavigation_widget .infoContainer .viewProducts a');
+        $results = $resultCrawler->filter('#searchBasedNavigation_widget .infoContainer .viewProducts');
         $this->logger->info('Results', array(
             'url' => $url,
             'results' => $results->count()
         ));
-        $found = $results->each(function (Crawler $node, $i) {
-            return $node->attr('href');
-        });
+        $found = $this->reduceResults($results);
         return $found;
     }
 
@@ -96,18 +93,31 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         $url = "https://www.sigmaaldrich.com/catalog/search?interface=All&term=$search&N=0&mode=mode+matchall&lang=de&region=CH&focus=product"; //&focus=buildingblocks or &focus=products
         $content = $this->curl($url);
         $resultCrawler = new Crawler($content);
-        $results = $resultCrawler->filter('.productContainer .product-listing-outer .productNumberValue a');
+        $results = $resultCrawler->filter('.productContainer .product-listing-outer .productNumberValue');
         $this->logger->info('Results', array(
             'url' => $url,
             'results' => $results->count()
         ));
-        $found = $results->each(function (Crawler $node, $i) {
-            return $node->attr('href');
-        });
+        $found = $this->reduceResults($results);
         if (!count($found)) {
             return $this->loadSearchResults($search);
         }
         return $found;
+    }
+
+    protected function reduceResults(Crawler $results) {
+        $links = $results->filter('a');
+        while ($links->count() > 10) {
+            $links = $links->reduce(function (Crawler $node, $i) {
+                // filters every second node
+                // this is relatively arbitrary. could be done better
+                return ($i % 2) == 0;
+            });
+        }
+        $targets = $links->each(function (Crawler $node, $i) {
+            return $node->attr('href');
+        });
+        return $targets;
     }
 
     /**
