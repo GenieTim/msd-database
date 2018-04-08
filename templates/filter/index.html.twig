@@ -2,55 +2,61 @@
 
 {% block title %}Filter Substances{% endblock %}
 
-{% block body %}
-    {{ form_start(form) }}
-    {{ form_widget(form) }}
-    {{ form_end(form) }}
+{% block content %}
+    <div class="container">
+        {{ form_start(form) }}
+        {{ form_widget(form) }}
+        {{ form_end(form) }}
+    </div>
 
-    {% if substance %}
-        <table>
-            <tr>
-                <th>Name</th>
-                <td>{{ substance.name }}</td>
-            </tr>
-            <tr>
-                <th>Formula</th>
-                <td>{{ substance.formula }}</td>
-            </tr>
-            <tr>
-                <th>CAS Number</th>
-                <td>{{ substance.CASNumber }}</td>
-            </tr>
-            <tr>
-                <th>PubChem Id</th>
-                <td>{{ substance.pubchemId }}</td>
-            </tr>
-            <tr>
-                <th>Signal Word</th>
-                <td>{{ substance.signalWord }}</td>
-            </tr>
-            <tr>
-                <th>Statements</th>
-                <td>
-                    <ul>
-                        {% for s in substance.statements %}
-                            <li>{{ s.name }} : {{ s.description }}</li>
-                            {% endfor %}
-                    </ul>
-                </td>
-            </tr>
-            <tr>
-                <th>Symbols</th>
-                <td>
-                    <ul>
-                        {% for s in substance.symbols %}
-                            <li>{{ s.name }}</li>
-                            {% endfor %}
-                    </ul>
-                </td>
-            </tr>
-        </table>
-    {% else %}
-        <p>No substance found.</p>
-    {% endif %}
+    <div class="container">
+        {% if substance %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <tr>
+                        <th>Name</th>
+                        <td>{{ substance.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Formula</th>
+                        <td>{{ substance.formula }}</td>
+                    </tr>
+                    <tr>
+                        <th>CAS Number</th>
+                        <td>{{ substance.CASNumber }}</td>
+                    </tr>
+                    <tr>
+                        <th>PubChem Id</th>
+                        <td>{{ substance.pubchemId }}</td>
+                    </tr>
+                    <tr>
+                        <th>Signal Word</th>
+                        <td>{{ substance.signalWord }}</td>
+                    </tr>
+                    <tr>
+                        <th>Statements</th>
+                        <td>
+                            <ul>
+                                {% for s in substance.statements %}
+                                    <li>{{ s.name }} : {{ s.description }}</li>
+                                    {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Symbols</th>
+                        <td>
+                            <ul>
+                                {% for s in substance.symbols %}
+                                    <li>{{ s.name }}</li>
+                                    {% endfor %}
+                            </ul>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        {% else %}
+            <p>No substance found.</p>
+        {% endif %}
+    </div>
 {% endblock %}

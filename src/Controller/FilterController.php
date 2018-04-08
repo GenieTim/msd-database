@@ -21,11 +21,11 @@ class FilterController extends Controller {
 
         $data = false;
         if ($form->isSubmitted() && $form->isValid()) {
-//            try {
+            try {
             $data = $substanceLoader->loadSubstance($form->get('search')->getData());
-//            } catch (\Exception $e) {
-//            $logger->warning("Error while loading substance", array('exception' => $e));
-//            }
+            } catch (\Exception $e) {
+            $logger->warning("Error while loading substance", array('exception' => $e));
+            }
         }
 
         return $this->render('filter/index.html.twig', array(

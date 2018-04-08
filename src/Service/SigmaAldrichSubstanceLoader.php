@@ -71,7 +71,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @return array
      */
     protected function loadSearchResults(string $search): array {
-        $url = "https://www.sigmaaldrich.com/catalog/search?interface=ALL&N=0+&mode=partialmax&term=$search&lang=de&region=CH&focus=buildingblocks"; //&focus=buildingblocks or &focus=products
+        $url = "https://www.sigmaaldrich.com/catalog/search?interface=All&N=0+&mode=partialmax&term=$search&lang=de&region=CH&focus=buildingblocks"; //&focus=buildingblocks or &focus=products
         $content = $this->curl($url);
         $resultCrawler = new Crawler($content);
         $results = $resultCrawler->filter('#searchBasedNavigation_widget .infoContainer .viewProducts a');
@@ -93,7 +93,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      */
     protected function loadProductResults(string $search): array {
         $search = urlencode($search);
-        $url = "https://www.sigmaaldrich.com/catalog/search?term=$search&interface=ALL&N=0&mode=match+partialmax&lang=de&region=CH&focus=product"; //&focus=buildingblocks or &focus=products
+        $url = "https://www.sigmaaldrich.com/catalog/search?interface=All&term=$search&N=0&mode=mode+matchall&lang=de&region=CH&focus=product"; //&focus=buildingblocks or &focus=products
         $content = $this->curl($url);
         $resultCrawler = new Crawler($content);
         $results = $resultCrawler->filter('.productContainer .product-listing-outer .productNumberValue a');
@@ -192,11 +192,11 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         if (!$statements || trim($statements, self::TRIM_CHARACTERS) == "") {
             $this->logger->warning("no statements found");
         }
-        $all_statements = preg_split('/(-|-|–)+/', $statements);
+        $all_statements = preg_split('/(-|-|–|\r\n|\n|\r)+/', $statements);
         array_walk($all_statements, function (&$statement) {
             $statement = $this->getStatement(trim($statement, self::TRIM_CHARACTERS));
         });
-        $substance->setStatements($all_statements);
+        $substance->setStatements(array_filter($all_statements));
     }
 
     public static function extractText(Crawler $crawler, string $selector) {
@@ -215,7 +215,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      */
     protected function getSymbol(string $search): Symbol {
         $symbol = $this->signal_repo->findOneBy(array('name' => $search));
-        if (!$symbol) {
+        if (!$symbol && $search) {
             $symbol = new Symbol();
             $symbol->setName($search);
             $this->em->persist($symbol);
@@ -231,7 +231,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      */
     protected function getStatement(string $search): Statement {
         $statement = $this->statement_repo->findOneBy(array('name' => $search));
-        if (!$statement) {
+        if (!$statement && $search) {
             $statement = new Statement();
             $statement->setName($search);
             switch (strtolower(substr($search, 0, 1))) {
@@ -281,7 +281,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
             $return = $this->getContents($url);
         }
         curl_close($ch);
-        $this->logger->info("website ($url) content:", array('content' => $return));
+//        $this->logger->info("website ($url) content:", array('content' => $return));
         return $return;
     }
 
