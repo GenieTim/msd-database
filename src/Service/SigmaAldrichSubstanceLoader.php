@@ -46,16 +46,21 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
     public function loadSubstance(string $search) {
         $substance = $this->substance_repo->findByAny($search);
         if (!$substance) {
+            $returnSubstance = NULL;
             $possibleSubstances = $this->loadProductResults($search);
             if (count($possibleSubstances)) {
                 foreach ($possibleSubstances as $attempt) {
                     $substance = $this->loadSubstanceFromUri($this->normalizeUri($attempt));
+                    if (!$returnSubstance) {
+                        $returnSubstance = $substance;
+                    }
                     // check again for duplicates as the name could vary from the search
-                    if (!$this->substance_repo->findOneByName($substance->getName())) {
+                    if (!$this->substance_repo->findOneByName($substance->getName()) && $substance) {
                         $this->em->persist($substance);
                         $this->em->flush();
                     }
                 }
+                $substance = $returnSubstance;
             } else {
                 $this->logger->warning('no results found in search for ' . $search);
             }
