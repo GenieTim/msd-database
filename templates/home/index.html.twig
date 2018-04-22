@@ -2,6 +2,11 @@
 
 {% block title %}Welcome!{% endblock %}
 
+{% block meta %}
+    {{ parent() }}
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+{% endblock %}
+
 {% block content %}
 
     <div class="jumbotron jumbotron-fluid">
@@ -25,7 +30,7 @@
             <code>{{ absolute_url(path("api_substance", { 'format' : 'json'  })) }}</code>
             with a parameter called "search". Place whatever search term you want in there to fetch a substance. 
             The result will look like this, for example:
-            <code><pre>{{ render(controller('App\\Controller\\ApiController::getSubstanceAction', { 'format' : 'json', 'search' : 'HNO3'})) }}</pre></code>
+            <pre class="prettyprint"><code class="lang-js lang-json">{{ render(controller('App\\Controller\\ApiController::getSubstanceAction', { 'format' : 'json', 'search' : 'HNO3'})) }}</code></pre>
         </p>
     </div>
 {% endblock %}
