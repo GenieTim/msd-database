@@ -1,0 +1,3 @@
+[submodule "GHS-labels"]
+	path = GHS-labels
+	url = git@github.com:rsmith-nl/GHS-labels.git
