@@ -49,7 +49,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
             $possibleSubstances = $this->loadProductResults($search);
             if (count($possibleSubstances)) {
                 foreach ($possibleSubstances as $attempt) {
-                    $substance = $this->loadSubstanceFromUri($this->normalizeUri($possibleSubstances[0]));
+                    $substance = $this->loadSubstanceFromUri($this->normalizeUri($attempt));
                     // check again for duplicates as the name could vary from the search
                     if (!$this->substance_repo->findOneByName($substance->getName())) {
                         $this->em->persist($substance);
@@ -105,6 +105,12 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         return $found;
     }
 
+    /**
+     * Reduce a Crawler to < 10 results
+     * 
+     * @param Crawler $results
+     * @return array of links 
+     */
     protected function reduceResults(Crawler $results) {
         $links = $results->filter('a');
         while ($links->count() > 10) {
@@ -200,7 +206,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         $substance->setWgkGermany(self::extractText($safetyCrawler, '.safetyRight#WGK\ Germany'));
         $statements = self::extractText($safetyCrawler, '.safetyRight[id="Precautionary statements"]') . self::extractText($safetyCrawler, '.safetyRight[id="Hazard statements"]');
         if (!$statements || trim($statements, self::TRIM_CHARACTERS) == "") {
-            $this->logger->warning("no statements found");
+            $this->logger->warning("no statements found for " . $substance->getCASNumber());
         }
         $all_statements = preg_split('/(-|-|–|\r\n|\n|\r)+/', $statements);
         array_walk($all_statements, function (&$statement) {

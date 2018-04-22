@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2018 Tim Bernhard, KWI
+# Copyright (c) 2018 Tim Bernhard
 # Pulls from remote, installs dependencies and executes the update command.
 
 set -e
