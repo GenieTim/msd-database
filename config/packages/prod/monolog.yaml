@@ -3,11 +3,27 @@ monolog:
         main:
             type: fingers_crossed
             action_level: error
-            handler: nested
+            handler:  grouped
+        grouped:
+            type:    group
+            members: [streamed, deduplicated]
+        deduplicated:
+            type:    deduplication
+            handler: swift
+        swift:
+            type:       swift_mailer
+            from_email: 'error@sds.genieblog.ch'
+            to_email:   'error@genieblog.ch'
+            # or list of recipients
+            # to_email:   ['dev1@example.com', 'dev2@example.com', ...]
+            subject:    'An Error Occurred! %%message%%'
+            level:      debug
+            formatter:  monolog.formatter.html
+            content_type: text/html
             excluded_404s:
                 # regex: exclude all 404 errors from the logs
                 - ^/
-        nested:
+        streamed:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: debug
