@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Filter Substances{% endblock %}
+{% block title %}Filter Substances{% if substance %}: {{ substance.name }}{% endif %}{% endblock %}
 
 {% block content %}
     <div class="container">

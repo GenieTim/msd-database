@@ -5,8 +5,9 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-
 use App\Service\SigmaAldrichSubstanceLoader;
+use App\Entity\Statement;
+use App\Entity\Symbol;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\SubstanceRepository")
@@ -139,9 +140,11 @@ class Substance {
     public function setSymbols(array $symbols): self {
         $this->symbols = new ArrayCollection();
         foreach ($symbols as $symbol) {
-            $this->addSymbol($symbol);
+            if ($symbol instanceof Symbol) {
+                $this->addSymbol($symbol);
+            }
         }
-        
+
         return $this;
     }
 
@@ -181,7 +184,9 @@ class Substance {
     public function setStatements(array $statements): self {
         $this->statements = new ArrayCollection();
         foreach ($statements as $statement) {
-            $this->addStatement($statement);
+            if ($statement instanceof Statement) {
+                $this->addStatement($statement);
+            }
         }
 
         return $this;
