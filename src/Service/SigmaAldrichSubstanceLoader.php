@@ -126,7 +126,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @param string $uri
      * @return Substance
      */
-    protected function loadSubstanceFromUri(string $uri): Substance {
+    protected function loadSubstanceFromUri(string $uri) {
         $result = $this->curl($uri . "?lang=de&region=CH");
         $resultCrawler = new Crawler($result);
         $substance = new Substance();
@@ -223,7 +223,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @param string $search
      * @return Symbol
      */
-    protected function getSymbol(string $search): Symbol {
+    protected function getSymbol(string $search) {
         $symbol = $this->signal_repo->findOneBy(array('name' => $search));
         if (!$symbol && $search) {
             $symbol = new Symbol();
@@ -239,7 +239,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @param string $search
      * @return Statement
      */
-    protected function getStatement(string $search): Statement {
+    protected function getStatement(string $search) {
         $statement = $this->statement_repo->findOneBy(array('name' => $search));
         if (!$statement && $search) {
             $statement = new Statement();
