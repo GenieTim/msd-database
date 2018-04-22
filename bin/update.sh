@@ -8,4 +8,5 @@ cd "$(dirname $0)/.."
 git pull
 composer install --no-dev --optimize-autoloader
 php bin/console cache:clear --env=prod --no-debug
-yarn run enore production
+yarn run encore production
+./bin/fix-permissions.sh
