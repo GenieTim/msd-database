@@ -113,7 +113,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      */
     protected function reduceResults(Crawler $results) {
         $links = $results->filter('a');
-        while ($links->count() > 10) {
+        while ($links->count() > 5) {
             $links = $links->reduce(function (Crawler $node, $i) {
                 // filters every second node
                 // this is relatively arbitrary. could be done better
