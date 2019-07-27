@@ -19,6 +19,10 @@ class StatementRepository extends ServiceEntityRepository
         parent::__construct($registry, Statement::class);
     }
 
+    public function getMatching(string $search) {
+
+    }
+
 //    /**
 //     * @return Statement[] Returns an array of Statement objects
 //     */

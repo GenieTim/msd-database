@@ -91,7 +91,7 @@ class Substance {
         return $this->id;
     }
 
-    public function getName() {
+    public function getName(): ?string {
         return $this->name;
     }
 
@@ -101,7 +101,7 @@ class Substance {
         return $this;
     }
 
-    public function getFormula() {
+    public function getFormula(): ?string {
         return $this->formula;
     }
 
@@ -111,7 +111,7 @@ class Substance {
         return $this;
     }
 
-    public function getPubchemId() {
+    public function getPubchemId(): ?int {
         return $this->pubchem_id;
     }
 
@@ -121,7 +121,7 @@ class Substance {
         return $this;
     }
 
-    public function getCASNumber() {
+    public function getCASNumber(): ?string {
         return $this->cas_number;
     }
 
@@ -164,7 +164,7 @@ class Substance {
         return $this;
     }
 
-    public function getSignalWord() {
+    public function getSignalWord(): ?string {
         return $this->signal_word;
     }
 
@@ -208,7 +208,7 @@ class Substance {
         return $this;
     }
 
-    public function getRidadr(): string {
+    public function getRidadr(): ?string {
         return $this->ridadr;
     }
 
@@ -218,7 +218,7 @@ class Substance {
         return $this;
     }
 
-    public function getWgkGermany(): int {
+    public function getWgkGermany(): ?int {
         return $this->wgk_germany;
     }
 
@@ -230,7 +230,7 @@ class Substance {
         return $this;
     }
 
-    public function getRtecs(): string {
+    public function getRtecs(): ?string {
         return $this->rtecs;
     }
 
