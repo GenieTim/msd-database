@@ -20,9 +20,9 @@ monolog:
             level:      debug
             formatter:  monolog.formatter.html
             content_type: text/html
-            excluded_404s:
-                # regex: exclude all 404 errors from the logs
-                - ^/
+            # excluded_404s:
+            #     # regex: exclude all 404 errors from the logs
+            #     - ^/
         streamed:
             type: stream
             path: "%kernel.logs_dir%/%kernel.environment%.log"

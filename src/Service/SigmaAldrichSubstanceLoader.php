@@ -62,7 +62,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
                 }
                 $substance = $returnSubstance;
             } else {
-                $this->logger->warning('no results found in search for ' . $search);
+                $this->logger->warning('no results found by ' . self::class . ' in search for ' . $search);
             }
         }
         return $substance;
