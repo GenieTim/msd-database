@@ -134,7 +134,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
     if (isset($wikiDataEntity->properties["P5040"])) {
       $symbol = $wikiDataEntity->properties["P5040"]->value;
       // caution: we just assume we get only one symbol, which may be wrong in many cases
-      $symbolName = (split(':', $symbol))[0];
+      $symbolName = (explode(':', $symbol))[0];
       $savedSymbol = $this->symbol_repo->findOneBy(['name' => $symbolName]);
       $substance->setSymbols([$savedSymbol]);
     }
