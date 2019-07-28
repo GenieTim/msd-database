@@ -4,7 +4,7 @@
 
 - [ ] Improve search speed & stability
 
-Add Sources:
+Add Sources, e.g.:
 - [ ] DSSTOX
 - [ ] ECHA
-- [ ] 
+- [ ] Gestis
