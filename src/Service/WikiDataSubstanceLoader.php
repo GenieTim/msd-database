@@ -43,7 +43,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
   public function loadSubstance(string $search)
   {
     $substance = $this->substance_repo->findByAny($search);
-    if (!$substance) {
+    // if (!$substance) {
       $results = $this->findSubstancesInApi($search);
       if (count($results) === 0) {
         $this->logger->warning('no results found by ' . self::class . ' in search for ' . $search);
@@ -58,7 +58,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         // return just first one?!?
         $substance = $allSubstances[0];
       }
-    }
+    // }
     return $substance;
   }
 
@@ -106,6 +106,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
     // H-statement: P5041
     // signal word: P1033
     // GHS pictogram:   P5040
+    if (isset($wikiDataEntity->properties['P4952']))
     $safetyData = $wikiDataEntity->properties['P4952'];
     // if (isset($safetyData)) // access children
 
