@@ -6,6 +6,7 @@ use App\Entity\Substance;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 use App\Service\SigmaAldrichSubstanceLoader;
+use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
  * @method Substance|null find($id, $lockMode = null, $lockVersion = null)
@@ -15,7 +16,7 @@ use App\Service\SigmaAldrichSubstanceLoader;
  */
 class SubstanceRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Substance::class);
     }

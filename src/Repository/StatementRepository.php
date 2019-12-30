@@ -4,7 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Statement;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Symfony\Bridge\Doctrine\RegistryInterface;
+use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
  * @method Statement|null find($id, $lockMode = null, $lockVersion = null)
@@ -14,18 +14,18 @@ use Symfony\Bridge\Doctrine\RegistryInterface;
  */
 class StatementRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+    public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Statement::class);
     }
 
-    public function getMatching(string $search) {
-
+    public function getMatching(string $search)
+    {
     }
 
-//    /**
-//     * @return Statement[] Returns an array of Statement objects
-//     */
+    //    /**
+    //     * @return Statement[] Returns an array of Statement objects
+    //     */
     /*
     public function findByExampleField($value)
     {
