@@ -9,8 +9,9 @@ use Psr\Log\LoggerInterface;
 use App\Service\SubstanceLoaderInterface;
 use App\Form\SimpleSearchType;
 use App\Repository\SubstanceRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class FilterController extends Controller {
+class FilterController extends AbstractController {
 
     /**
      * @Route("/filter", name="filter")

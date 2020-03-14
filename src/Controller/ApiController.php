@@ -8,8 +8,9 @@ use Symfony\Component\HttpFoundation\Request;
 use JMS\SerializerBundle\Serializer;
 use App\Service\SubstanceLoaderInterface;
 use App\Entity\Substance;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class ApiController extends Controller {
+class ApiController extends AbstractController {
 
     /**
      * @Route("/api/{format}/substance", name="api_substance")
