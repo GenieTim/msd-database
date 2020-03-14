@@ -28,7 +28,7 @@
         "symfony/flex": "^v1.6.2",
         "symfony/form": "^v4.4.5",
         "symfony/framework-bundle": "^v4.4.5",
-        "symfony/maker-bundle": "^v1.14.3",
+        "symfony/maker-bundle": "^v1.14.6",
         "symfony/monolog-bundle": "^v3.5.0",
         "symfony/orm-pack": "^v1.0.8",
         "symfony/process": "^v4.4.5",
