@@ -1,46 +1,47 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %} – SDS Database</title>
-        {% block stylesheets %}
-            <link rel="stylesheet" href="{{ asset('build/css/global.css') }}">
-        {% endblock %}
-        {% block meta %}
+	<head>
+		<meta charset="UTF-8">
+		<title>
+			{% block title %}Welcome!
+			{% endblock %}
+			– SDS Database</title>
+		{% block stylesheets %}
+			{{ encore_entry_link_tags('app') }}
+			<link rel="stylesheet" href="{{ asset('build/css/global.css') }}">
+		{% endblock %}
+		{% block meta %}{% endblock %}
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+			<a class="navbar-brand" href="{{ path('index') }}">Molecule Safety Database</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
 
-        {% endblock %}
-    </head>
-    <body>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="{{ path('index') }}">Molecule Safety Database</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="{{ path('home') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ path('filter') }}">Filter</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-        <div class="container mt-2">
-            {% block content %}
-            {% endblock %}
-        </div>
-        <div class="container-fluid mt-5 bg-light ">
-            <footer class="footer py-3 px-3">
-                <div  class="mx-auto text-muted">
-                    <p>Copyright © Tim Bernhard, {{"now"|date("Y")}}. All rights reserved. This webservice is provided “AS IS” and without warranty of any kind, either express or implied.</p>
-                </div>
-            </footer>
-        </div>
-        {% block javascripts %}
-            <script src="{{ asset('build/js/global.js') }}"></script>
-        {% endblock %}
-    </body>
-</html>
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item active">
+						<a class="nav-link" href="{{ path('home') }}">Home</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="{{ path('filter') }}">Filter</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+		<div class="container mt-2"> {% block content %}{% endblock %}
+			</div>
+			<div class="container-fluid mt-5 bg-light ">
+				<footer class="footer py-3 px-3">
+					<div class="mx-auto text-muted">
+						<p>Copyright © Tim Bernhard,
+							{{"now"|date("Y")}}. All rights reserved. This webservice is provided “AS IS” and without warranty of any kind, either express or implied.</p>
+					</div>
+				</footer>
+			</div>
+			{% block javascripts %}
+				{{ encore_entry_script_tags('app') }}
+			{% endblock %}
+		</body>
+	</html>
