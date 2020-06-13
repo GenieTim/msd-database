@@ -9,5 +9,7 @@ git pull
 composer install --no-dev --optimize-autoloader
 yarn install
 php bin/console cache:clear --env=prod --no-debug
+php bin/console assets:install --env=prod --no-debug
+composer dump-env prod
 yarn run encore production
 ./bin/fix-permissions.sh
