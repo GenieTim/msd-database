@@ -15,5 +15,6 @@ jobs:
       # first, checkout the repo
       - uses: actions/checkout@v2
 
+      # then, analyse it
       - name: The PHP Security Checker
         uses: symfonycorp/security-checker-action@v2
