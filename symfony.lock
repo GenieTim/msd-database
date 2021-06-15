@@ -62,9 +62,6 @@
     "doctrine/persistence": {
         "version": "v1.1.0"
     },
-    "doctrine/reflection": {
-        "version": "1.2.2"
-    },
     "doctrine/sql-formatter": {
         "version": "1.1.0"
     },
@@ -367,6 +364,9 @@
     },
     "symfony/property-info": {
         "version": "v4.0.8"
+    },
+    "symfony/proxy-manager-bridge": {
+        "version": "v5.3.0"
     },
     "symfony/routing": {
         "version": "4.0",
