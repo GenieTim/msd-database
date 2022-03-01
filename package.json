@@ -3,7 +3,7 @@
         "@symfony/webpack-encore": "^1.8.1",
         "jquery": "^3.6.0",
         "node-sass": "^7.0.1",
-        "sass-loader": "^12.4.0"
+        "sass-loader": "^12.6.0"
     },
     "license": "GPL-3.0-or-later",
     "private": true,
