@@ -1,9 +1,9 @@
 {
     "devDependencies": {
-        "@symfony/webpack-encore": "^2.1.0",
+        "@symfony/webpack-encore": "^3.0.0",
         "jquery": "^3.6.0",
         "node-sass": "^7.0.1",
-        "sass-loader": "^13.0.0"
+        "sass-loader": "^13.0.2"
     },
     "license": "GPL-3.0-or-later",
     "private": true,
