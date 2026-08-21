@@ -26,9 +26,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class PubChemSubstanceLoader implements SubstanceLoaderInterface
 {
-    private const PUG_REST_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
-    private const PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view';
-    private const CAS_REGEX = '/^\d{2,7}-\d{2}-\d$/';
+    private const string PUG_REST_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
+    private const string PUG_VIEW_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view';
+    private const string CAS_REGEX = '/^\d{2,7}-\d{2}-\d$/';
 
     public function __construct(
         private readonly EntityManagerInterface $em,

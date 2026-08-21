@@ -63,7 +63,7 @@ class AppImportWgkCommand extends Command
         $updatedCount = 0;
         $rowCount = 0;
 
-        while (($row = fgetcsv($handle, 1000, ';')) !== false) {
+        while (($row = fgetcsv($handle, 1000, ';', escape: '\\')) !== false) {
             $rowCount++;
             if ($rowCount === 1) {
                 continue; // header

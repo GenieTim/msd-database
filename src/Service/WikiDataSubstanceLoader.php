@@ -26,9 +26,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class WikiDataSubstanceLoader implements SubstanceLoaderInterface
 {
-    private const WIKIDATA_API_BASE = 'https://www.wikidata.org/w/api.php';
-    private const WIKIDATA_ENTITY_BASE = 'https://www.wikidata.org/wiki/Special:EntityData';
-    private const LANGUAGE = 'en';
+    private const string WIKIDATA_API_BASE = 'https://www.wikidata.org/w/api.php';
+    private const string WIKIDATA_ENTITY_BASE = 'https://www.wikidata.org/wiki/Special:EntityData';
+    private const string LANGUAGE = 'en';
 
     public function __construct(
         private readonly EntityManagerInterface $em,

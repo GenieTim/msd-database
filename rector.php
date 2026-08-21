@@ -13,7 +13,7 @@ return RectorConfig::configure()
         __DIR__ . '/config',
         __DIR__ . '/public',
     ])
-    ->withPhpSets(php83: true)
+    ->withPhpSets(php84: true)
     ->withAttributesSets(
         symfony: true,
         doctrine: true

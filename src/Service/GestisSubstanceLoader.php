@@ -26,7 +26,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class GestisSubstanceLoader implements SubstanceLoaderInterface
 {
-    private const BASE_URL = 'https://gestis.dguv.de/data?name=';
+    private const string BASE_URL = 'https://gestis.dguv.de/data?name=';
 
     public function __construct(
         private readonly StatementRepository $statementRepo,

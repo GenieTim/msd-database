@@ -19,7 +19,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class CompToxSubstanceLoader implements SubstanceLoaderInterface
 {
-    private const BASE_URL = 'https://api-ccte.epa.gov/chemical/search/equal';
+    private const string BASE_URL = 'https://api-ccte.epa.gov/chemical/search/equal';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
