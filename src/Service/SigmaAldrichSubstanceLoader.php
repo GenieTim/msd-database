@@ -276,7 +276,6 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
             $this->logger->alert("cURL failed", [curl_error($ch), curl_errno($ch), $return, error_get_last()]);
             $return = $this->getContents($url);
         }
-        curl_close($ch);
         return $return;
     }
 
