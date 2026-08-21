@@ -57,10 +57,6 @@ services:
         tags:
             - { name: 'app.substance_loader', priority: 20 }
 
-    # Twig Extensions
-    App\Twig\ChemicalExtension:
-        tags: ['twig.extension']
-
     # GHS Label Generator
     App\Service\GhsLabelGenerator:
         arguments:

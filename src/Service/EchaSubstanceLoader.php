@@ -120,7 +120,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                 $results = array_is_list($data) ? $data : [$data];
             }
 
-            if (!is_array($results) || empty($results)) {
+            if (!is_array($results) || $results === []) {
                 return null;
             }
 
@@ -310,7 +310,6 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
     /**
      * Parse and persist GHS Symbol entities.
      *
-     * @param mixed $rawSymbols
      * @return array<Symbol>
      */
     private function parseSymbols(mixed $rawSymbols): array
@@ -348,8 +347,6 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
     /**
      * Parse and persist H and P Statement entities.
      *
-     * @param mixed $hStatements
-     * @param mixed $pStatements
      * @return array<Statement>
      */
     private function parseStatements(mixed $hStatements, mixed $pStatements): array

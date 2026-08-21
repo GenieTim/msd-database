@@ -18,7 +18,7 @@ use Twig\TwigFunction;
  * ChemicalExtension provides Twig helpers for chemical structure previews,
  * GHS pictogram URLs/descriptions, and signal word badge styling.
  */
-class ChemicalExtension extends AbstractExtension
+class ChemicalExtension
 {
     private const string PUBCHEM_PUG_REST_BASE = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug';
     private const string PUBCHEM_GHS_BASE = 'https://pubchem.ncbi.nlm.nih.gov/images/ghs';
@@ -86,42 +86,8 @@ class ChemicalExtension extends AbstractExtension
         ],
     ];
 
-    /**
-     * @return array<TwigFunction>
-     */
-    public function getFunctions(): array
-    {
-        return [
-            new TwigFunction('structure_image_url', [$this, 'getStructureImageUrl']),
-            new TwigFunction('substance_structure_url', [$this, 'getStructureImageUrl']),
-            new TwigFunction('chebi_structure_url', [$this, 'getChebiStructureImageUrl']),
-            new TwigFunction('smiles_structure_url', [$this, 'getSmilesStructureImageUrl']),
-            new TwigFunction('ghs_symbol_url', [$this, 'getGhsSymbolUrl']),
-            new TwigFunction('ghs_symbol_code', [$this, 'getGhsSymbolCode']),
-            new TwigFunction('ghs_symbol_description', [$this, 'getGhsSymbolDescription']),
-            new TwigFunction('symbol_badge_class', [$this, 'getSymbolBadgeClass']),
-            new TwigFunction('signal_word_badge_class', [$this, 'getSignalWordBadgeClass']),
-        ];
-    }
-
-    /**
-     * @return array<TwigFilter>
-     */
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('structure_image_url', [$this, 'getStructureImageUrl']),
-            new TwigFilter('substance_structure_url', [$this, 'getStructureImageUrl']),
-            new TwigFilter('chebi_structure_url', [$this, 'getChebiStructureImageUrl']),
-            new TwigFilter('smiles_structure_url', [$this, 'getSmilesStructureImageUrl']),
-            new TwigFilter('ghs_symbol_url', [$this, 'getGhsSymbolUrl']),
-            new TwigFilter('ghs_symbol_code', [$this, 'getGhsSymbolCode']),
-            new TwigFilter('ghs_symbol_description', [$this, 'getGhsSymbolDescription']),
-            new TwigFilter('symbol_badge_class', [$this, 'getSymbolBadgeClass']),
-            new TwigFilter('signal_word_badge_class', [$this, 'getSignalWordBadgeClass']),
-        ];
-    }
-
+    #[\Twig\Attribute\AsTwigFilter(name: 'symbol_badge_class')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'symbol_badge_class')]
     public function getSymbolBadgeClass(Symbol|string|null $symbol): string
     {
         $code = $this->getGhsSymbolCode($symbol);
@@ -142,6 +108,10 @@ class ChemicalExtension extends AbstractExtension
     /**
      * Returns a 2D chemical structure image URL for a Substance entity, PubChem CID, ChEBI ID, SMILES, or CAS number.
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'structure_image_url')]
+    #[\Twig\Attribute\AsTwigFilter(name: 'substance_structure_url')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'structure_image_url')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'substance_structure_url')]
     public function getStructureImageUrl(Substance|string|int|null $input, int|string $size = '300x300'): ?string
     {
         if ($input === null) {
@@ -186,6 +156,8 @@ class ChemicalExtension extends AbstractExtension
     /**
      * Generate ChEBI 2D structure image URL.
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'chebi_structure_url')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'chebi_structure_url')]
     public function getChebiStructureImageUrl(string $chebiId, int|string $dimensions = 300): string
     {
         $id = preg_replace('/^CHEBI[:_]?/i', '', trim($chebiId));
@@ -197,6 +169,8 @@ class ChemicalExtension extends AbstractExtension
     /**
      * Generate PubChem SMILES 2D structure image URL.
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'smiles_structure_url')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'smiles_structure_url')]
     public function getSmilesStructureImageUrl(string $smiles, int|string $size = '300x300'): string
     {
         $sizeStr = $this->normalizeSizeString($size);
@@ -207,6 +181,8 @@ class ChemicalExtension extends AbstractExtension
     /**
      * Returns the SVG URL for a GHS symbol / pictogram.
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'ghs_symbol_url')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'ghs_symbol_url')]
     public function getGhsSymbolUrl(Symbol|string|null $symbol): ?string
     {
         $code = $this->getGhsSymbolCode($symbol);
@@ -220,13 +196,15 @@ class ChemicalExtension extends AbstractExtension
     /**
      * Returns canonical GHS code (e.g., "GHS02") for a Symbol entity or string.
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'ghs_symbol_code')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'ghs_symbol_code')]
     public function getGhsSymbolCode(Symbol|string|null $symbol): ?string
     {
         if ($symbol === null) {
             return null;
         }
 
-        $name = $symbol instanceof Symbol ? (string) $symbol->getName() : (string) $symbol;
+        $name = $symbol instanceof Symbol ? (string) $symbol->getName() : $symbol;
         $name = trim($name);
         if ($name === '') {
             return null;
@@ -262,6 +240,8 @@ class ChemicalExtension extends AbstractExtension
     /**
      * Returns human-readable description for a GHS symbol.
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'ghs_symbol_description')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'ghs_symbol_description')]
     public function getGhsSymbolDescription(Symbol|string|null $symbol): ?string
     {
         if ($symbol instanceof Symbol && $symbol->getDescription() !== null && trim($symbol->getDescription()) !== '') {
@@ -277,7 +257,7 @@ class ChemicalExtension extends AbstractExtension
             return $symbol->getName();
         }
 
-        return $symbol !== null && trim((string) $symbol) !== '' ? trim((string) $symbol) : null;
+        return $symbol !== null && trim($symbol) !== '' ? trim($symbol) : null;
     }
 
     /**
@@ -286,6 +266,8 @@ class ChemicalExtension extends AbstractExtension
      * - "Warning" -> Yellow/Orange badge ("badge bg-warning text-dark")
      * - Other -> Secondary badge ("badge bg-secondary")
      */
+    #[\Twig\Attribute\AsTwigFilter(name: 'signal_word_badge_class')]
+    #[\Twig\Attribute\AsTwigFunction(name: 'signal_word_badge_class')]
     public function getSignalWordBadgeClass(?string $signalWord): string
     {
         if ($signalWord === null) {

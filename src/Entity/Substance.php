@@ -411,8 +411,8 @@ class Substance
      */
     public function getStructureImageUrl(int|string $size = '300x300'): ?string
     {
-        $sizeStr = is_int($size) ? sprintf('%dx%d', $size, $size) : (str_contains((string) $size, 'x') ? (string) $size : sprintf('%sx%s', $size, $size));
-        $dimension = is_int($size) ? (string) $size : (preg_match('/^(\d+)/', (string) $size, $m) ? $m[1] : '300');
+        $sizeStr = is_int($size) ? sprintf('%dx%d', $size, $size) : (str_contains($size, 'x') ? $size : sprintf('%sx%s', $size, $size));
+        $dimension = is_int($size) ? (string) $size : (preg_match('/^(\d+)/', $size, $m) ? $m[1] : '300');
 
         if ($this->pubchem_id !== null) {
             return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/CID/%d/PNG?image_size=%s', $this->pubchem_id, $sizeStr);
