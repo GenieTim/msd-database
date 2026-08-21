@@ -10,32 +10,28 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[\Symfony\Component\Console\Attribute\AsCommand(name: 'app:search-substance', description: 'Search in the database. Mostly useable for debugging.')]
 class SearchSubstanceCommand extends Command
 {
-    protected static $defaultName = 'app:search-substance';
-
-    protected $substanceLoader;
-
-    public function __construct(SubstanceLoaderInterface $substanceLoader)
+    public function __construct(protected \App\Service\SubstanceLoaderInterface $substanceLoader)
     {
-        $this->substanceLoader = $substanceLoader;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
-            ->setDescription('Search in the database. Mostly useable for debugging.')
             ->addArgument('search', InputArgument::REQUIRED, 'The string to search for')
         ;
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
+        new SymfonyStyle($input, $output);
         $search = $input->getArgument('search');
 
         $res = $this->substanceLoader->loadSubstance($search);
         dump($res);
+        return \Symfony\Component\Console\Command\Command::SUCCESS;
     }
 }

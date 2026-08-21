@@ -4,15 +4,11 @@ namespace App\Repository;
 
 use App\Entity\Substance;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Symfony\Bridge\Doctrine\RegistryInterface;
 use App\Service\SigmaAldrichSubstanceLoader;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Substance|null find($id, $lockMode = null, $lockVersion = null)
- * @method Substance|null findOneBy(array $criteria, array $orderBy = null)
- * @method Substance[]    findAll()
- * @method Substance[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Substance>
  */
 class SubstanceRepository extends ServiceEntityRepository
 {
@@ -20,20 +16,21 @@ class SubstanceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Substance::class);
     }
-    
-    public function findByAny($search) //: ?Statement 
-        {
+
+    public function findByAny(string $search): ?Substance
+    {
+        $val = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+
         return $this->createQueryBuilder('s')
             ->orWhere('s.cas_number = :val')
-                ->orWhere('s.formula = :val')
-                ->orWhere('s.name LIKE :val')
-                ->orWhere('s.pubchem_id = :val')
-            ->setParameter('val', trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS))
+            ->orWhere('s.formula = :val')
+            ->orWhere('s.name LIKE :val')
+            ->orWhere('s.pubchem_id = :val')
+            ->setParameter('val', $val)
             ->orderBy('s.id', 'ASC')
             ->setMaxResults(1)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
     }
 //    /**
 //     * @return Substance[] Returns an array of Substance objects

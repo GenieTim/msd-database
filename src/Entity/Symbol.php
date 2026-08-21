@@ -1,39 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
+use App\Service\SigmaAldrichSubstanceLoader;
 use Doctrine\ORM\Mapping as ORM;
 
-use App\Service\SigmaAldrichSubstanceLoader;
-
-/**
- * @ORM\Entity(repositoryClass="App\Repository\SymbolRepository")
- */
+#[ORM\Entity(repositoryClass: \App\Repository\SymbolRepository::class)]
 class Symbol
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private $name;
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255)]
+    private ?string $name = null;
 
-    /**
-     * @ORM\Column(type="string", length=1024, nullable=true)
-     */
-    private $description;
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 1024, nullable: true)]
+    private ?string $description = null;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -45,15 +38,16 @@ class Symbol
         return $this;
     }
 
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
 
         return $this;
     }
 }
+

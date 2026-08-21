@@ -1,151 +1,289 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * (c) Tim Bernhard
  */
 
 namespace App\Service;
 
-use App\Entity\Symbol;
-use Wikidata\Wikidata;
 use App\Entity\Statement;
 use App\Entity\Substance;
-use Wikidata\SearchResult;
-use Psr\Log\LoggerInterface;
+use App\Entity\Symbol;
+use App\Repository\StatementRepository;
+use App\Repository\SubstanceRepository;
+use App\Repository\SymbolRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Tightenco\Collect\Support\Collection;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Description of WikiDataSubstanceLoader
+ * WikiDataSubstanceLoader queries the Wikidata REST & Entity APIs
+ * for chemical substance safety data.
  *
  * @author timbernhard
  */
 class WikiDataSubstanceLoader implements SubstanceLoaderInterface
 {
-  private $em;
-  private $statement_repo;
-  private $symbol_repo;
-  private $substance_repo;
-  private $logger;
-  private $api_client;
-  const LANGUAGE = 'en';
+    private const WIKIDATA_API_BASE = 'https://www.wikidata.org/w/api.php';
+    private const WIKIDATA_ENTITY_BASE = 'https://www.wikidata.org/wiki/Special:EntityData';
+    private const LANGUAGE = 'en';
 
-  public function __construct(EntityManagerInterface $em, LoggerInterface $logger)
-  {
-    $this->em = $em;
-    $this->logger = $logger;
-    $this->symbol_repo = $em->getRepository(Symbol::class);
-    $this->substance_repo = $em->getRepository(Substance::class);
-    $this->statement_repo = $em->getRepository(Statement::class);
-    $this->api_client = new Wikidata();
-  }
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly StatementRepository $statementRepo,
+        private readonly SymbolRepository $symbolRepo,
+        private readonly HttpClientInterface $httpClient,
+        private readonly LoggerInterface $logger
+    ) {
+    }
 
-  public function loadSubstance(string $search)
-  {
-    $substance = $this->substance_repo->findByAny($search);
-    // if (!$substance) {
-      $results = $this->findSubstancesInApi($search);
-      if (count($results) === 0) {
-        $this->logger->warning('no results found by ' . self::class . ' in search for ' . $search);
-      } else {
-        $allSubstances = array();
-        foreach ($results as $searchResult) {
-          /**
-           * @var SearchResult $searchResult
-           */
-          $allSubstances[] = $this->translateApiIdToSubstance($searchResult->id);
+    public function supports(string $search): bool
+    {
+        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+    }
+
+    public function loadSubstance(string $search): ?Substance
+    {
+        $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+        if ($search === '') {
+            return null;
         }
-        // return just first one?!?
-        $substance = $allSubstances[0];
-      }
-    // }
-    return $substance;
-  }
 
-  /**
-   * Find all substance results by search for a string
-   *
-   * @param string $search
-   * @return SearchResult[]
-   */
-  public function findSubstancesInApi(string $search)
-  {
-    $results = $this->api_client->search($search, self::LANGUAGE, 10);
-    return $results;
-  }
+        $results = $this->findSubstancesInApi($search);
+        if ($results === []) {
+            $this->logger->warning('no results found by ' . self::class . ' in search for ' . $search);
+            return null;
+        }
 
-  /**
-   * Load the necessary properties of a substance by id
-   *
-   * @param string $apiId
-   * @return Substance
-   */
-  public function translateApiIdToSubstance(string $apiId): Substance
-  {
-    $substance = new Substance();
-    $wikiDataEntity = $this->api_client->get($apiId, self::LANGUAGE);
-    // CAS: P231
-    // PubchemCID: P662
-    // formula: P274
-    // rtecs: P657
-    $translationKey = [
-      'CASNumber' => 'P231',
-      "PubchemId" => "P662",
-      "Formula" => "P274",
-      "Rtecs" => "P657",
-      "SignalWord" => "P1033"
-    ];
-    // get/set single properties
-    foreach ($translationKey as $key => $value) {
-      if (isset($wikiDataEntity->properties[$value])) {
-        call_user_func(array($substance, 'set' . $key), $wikiDataEntity->properties[$value]->value);
-      }
-    }
-    // Properties: childs of safety P4952 : 
-    // P-statement: P5042
-    // H-statement: P5041
-    // signal word: P1033
-    // GHS pictogram:   P5040
-    if (isset($wikiDataEntity->properties['P4952']))
-    $safetyData = $wikiDataEntity->properties['P4952'];
-    // if (isset($safetyData)) // access children
+        foreach ($results as $result) {
+            $entityId = $result['id'];
+            if ($entityId !== '') {
+                $substance = $this->translateApiIdToSubstance($entityId);
+                if ($substance instanceof Substance) {
+                    return $substance;
+                }
+            }
+        }
 
-    // assuming here: many-to-one are all set correctly
-    if (($s = $this->substance_repo->findOneBy([
-      'formula' => $substance->getFormula(),
-      'rtecs' => $substance->getRtecs(),
-      'pubchem_id' => $substance->getPubchemId(),
-      'signal_word' => $substance->getSignalWord()
-    ]))) {
-      return $s;
+        return null;
     }
-    // get/set properties with many-to-one relation
-    $statements = array();
-    if (isset($wikiDataEntity->properties["P5041"])) {
-      $hStatements = $wikiDataEntity->properties["P5041"]->value;
-      var_dump($hStatements);
-      $statements = array_merge($this->statement_repo->getMatching($hStatements), $statements);
-    }
-    if (isset($wikiDataEntity->properties["P5042"])) {
-      $pStatements = $wikiDataEntity->properties["P5042"]->value;
-      var_dump($pStatements);
-      $statements = array_merge($this->statement_repo->getMatching($pStatements), $statements);
-    }
-    $substance->setStatements($statements);
-    if (isset($wikiDataEntity->properties["P5040"])) {
-      $symbol = $wikiDataEntity->properties["P5040"]->value;
-      // caution: we just assume we get only one symbol, which may be wrong in many cases
-      $symbolName = (explode(':', $symbol))[0];
-      $savedSymbol = $this->symbol_repo->findOneBy(['name' => $symbolName]);
-      $substance->setSymbols([$savedSymbol]);
-    }
-    $substance->setSource('https://www.wikidata.org/wiki/' . $wikiDataEntity->id);
-    $substance->setName($wikiDataEntity->label);
 
-    // persist the new object
-    // $this->em->persist($substance);
-    // $this->em->flush();
+    /**
+     * Find substance results via Wikidata search API
+     *
+     * @return array<array{id: string, label: string, description?: string}>
+     */
+    public function findSubstancesInApi(string $search): array
+    {
+        try {
+            $response = $this->httpClient->request('GET', self::WIKIDATA_API_BASE, [
+                'query' => [
+                    'action' => 'wbsearchentities',
+                    'search' => $search,
+                    'language' => self::LANGUAGE,
+                    'format' => 'json',
+                    'limit' => 10,
+                ],
+                'headers' => [
+                    'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 10,
+            ]);
 
-    return $substance;
-  }
+            $data = $response->toArray();
+            return $data['search'] ?? [];
+        } catch (\Throwable $e) {
+            $this->logger->warning('Wikidata search error: ' . $e->getMessage(), ['exception' => $e]);
+            return [];
+        }
+    }
+
+    /**
+     * Load the properties of a substance by Wikidata ID (e.g. Q153)
+     */
+    public function translateApiIdToSubstance(string $apiId): ?Substance
+    {
+        try {
+            $url = sprintf('%s/%s.json', self::WIKIDATA_ENTITY_BASE, rawurlencode($apiId));
+            $response = $this->httpClient->request('GET', $url, [
+                'headers' => [
+                    'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 10,
+            ]);
+
+            $data = $response->toArray();
+            $entities = $data['entities'] ?? [];
+            $entity = $entities[$apiId] ?? null;
+
+            if (!$entity) {
+                return null;
+            }
+
+            $claims = $entity['claims'] ?? [];
+            $substance = new Substance();
+
+            // Label / Name
+            $label = $entity['labels'][self::LANGUAGE]['value'] ?? ($entity['labels']['de']['value'] ?? $apiId);
+            $substance->setName((string) $label);
+            $substance->setSource('https://www.wikidata.org/wiki/' . $apiId);
+
+            // CAS: P231
+            $cas = $this->extractClaimString($claims, 'P231');
+            if ($cas) {
+                $substance->setCASNumber($cas);
+            }
+
+            // PubChem CID: P662
+            $pubchemCid = $this->extractClaimString($claims, 'P662');
+            if ($pubchemCid && ctype_digit($pubchemCid)) {
+                $substance->setPubchemId((int) $pubchemCid);
+            }
+
+            // Formula: P274
+            $formula = $this->extractClaimString($claims, 'P274');
+            if ($formula) {
+                $substance->setFormula($formula);
+            }
+
+            // RTECS: P657
+            $rtecs = $this->extractClaimString($claims, 'P657');
+            if ($rtecs) {
+                $substance->setRtecs($rtecs);
+            }
+
+            // Signal Word: P1033
+            $signalWordId = $this->extractClaimEntityId($claims, 'P1033');
+            if ($signalWordId) {
+                $signalWord = match ($signalWordId) {
+                    'Q11484089' => 'Danger',
+                    'Q11484090' => 'Warning',
+                    default => $signalWordId,
+                };
+                $substance->setSignalWord($signalWord);
+            }
+
+            // H-statements (P5041) & P-statements (P5042)
+            $statementCodes = array_merge(
+                $this->extractClaimStrings($claims, 'P5041'),
+                $this->extractClaimStrings($claims, 'P5042')
+            );
+            if ($statementCodes !== []) {
+                $matchingStatements = $this->statementRepo->getMatching($statementCodes);
+                $substance->setStatements($matchingStatements);
+            }
+
+            // GHS Pictogram: P5040
+            $symbols = [];
+            $pictogramIds = $this->extractClaimEntityIds($claims, 'P5040');
+            foreach ($pictogramIds as $picId) {
+                // Map known Wikidata items or extract code
+                $symbolName = $this->mapWikidataPictogram($picId);
+                if ($symbolName) {
+                    $symbol = $this->symbolRepo->findOneBy(['name' => $symbolName]);
+                    if (!$symbol) {
+                        $symbol = new Symbol();
+                        $symbol->setName($symbolName);
+                        $this->em->persist($symbol);
+                    }
+                    $symbols[] = $symbol;
+                }
+            }
+            if ($symbols !== []) {
+                $substance->setSymbols($symbols);
+            }
+
+            return $substance;
+        } catch (\Throwable $e) {
+            $this->logger->warning(sprintf('Error resolving Wikidata entity %s: %s', $apiId, $e->getMessage()), [
+                'exception' => $e,
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Extract main string value from claims
+     *
+     * @param array<string, mixed> $claims
+     */
+    private function extractClaimString(array $claims, string $property): ?string
+    {
+        $claimList = $claims[$property] ?? [];
+        if (!empty($claimList[0]['mainsnak']['datavalue']['value'])) {
+            $val = $claimList[0]['mainsnak']['datavalue']['value'];
+            return is_string($val) ? $val : null;
+        }
+        return null;
+    }
+
+    /**
+     * Extract multiple string values from claims
+     *
+     * @param array<string, mixed> $claims
+     * @return array<string>
+     */
+    private function extractClaimStrings(array $claims, string $property): array
+    {
+        $values = [];
+        $claimList = $claims[$property] ?? [];
+        foreach ($claimList as $claim) {
+            $val = $claim['mainsnak']['datavalue']['value'] ?? null;
+            if (is_string($val)) {
+                $values[] = $val;
+            }
+        }
+        return $values;
+    }
+
+    /**
+     * Extract entity ID from claim datavalue
+     *
+     * @param array<string, mixed> $claims
+     */
+    private function extractClaimEntityId(array $claims, string $property): ?string
+    {
+        $claimList = $claims[$property] ?? [];
+        return $claimList[0]['mainsnak']['datavalue']['value']['id'] ?? null;
+    }
+
+    /**
+     * Extract all entity IDs from claim property
+     *
+     * @param array<string, mixed> $claims
+     * @return array<string>
+     */
+    private function extractClaimEntityIds(array $claims, string $property): array
+    {
+        $ids = [];
+        $claimList = $claims[$property] ?? [];
+        foreach ($claimList as $claim) {
+            $id = $claim['mainsnak']['datavalue']['value']['id'] ?? null;
+            if (is_string($id)) {
+                $ids[] = $id;
+            }
+        }
+        return $ids;
+    }
+
+    private function mapWikidataPictogram(string $qid): ?string
+    {
+        return match ($qid) {
+            'Q50379568' => 'GHS01', // Exploding bomb
+            'Q50379569' => 'GHS02', // Flame
+            'Q50379570' => 'GHS03', // Flame over circle
+            'Q50379571' => 'GHS04', // Gas cylinder
+            'Q50379572' => 'GHS05', // Corrosion
+            'Q50379573' => 'GHS06', // Skull and crossbones
+            'Q50379574' => 'GHS07', // Exclamation mark
+            'Q50379575' => 'GHS08', // Health hazard
+            'Q50379576' => 'GHS09', // Environment
+            default => null,
+        };
+    }
 }
+

@@ -4,13 +4,10 @@ namespace App\Repository;
 
 use App\Entity\Statement;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @method Statement|null find($id, $lockMode = null, $lockVersion = null)
- * @method Statement|null findOneBy(array $criteria, array $orderBy = null)
- * @method Statement[]    findAll()
- * @method Statement[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Statement>
  */
 class StatementRepository extends ServiceEntityRepository
 {
@@ -19,8 +16,28 @@ class StatementRepository extends ServiceEntityRepository
         parent::__construct($registry, Statement::class);
     }
 
-    public function getMatching(string $search)
+    /**
+     * @param string|array<string> $search
+     * @return Statement[]
+     */
+    public function getMatching(string|array $search): array
     {
+        if (is_array($search)) {
+            $codes = $search;
+        } else {
+            preg_match_all('/([HP]\d{3}[a-zA-Z\+]*(?:\+[HP]\d{3}[a-zA-Z\+]*)*)/i', $search, $matches);
+            $codes = $matches[0];
+        }
+
+        if ($codes === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('s')
+            ->where('s.name IN (:codes)')
+            ->setParameter('codes', array_values(array_unique($codes)))
+            ->getQuery()
+            ->getResult();
     }
 
     //    /**

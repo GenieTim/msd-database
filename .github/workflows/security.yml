@@ -1,20 +1,26 @@
-name: Security Check
+name: Security Audit
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
   schedule:
-    - cron: "0 6 1 * *"
+    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
 
 jobs:
-  build:
+  composer-audit:
+    name: Composer Security Audit
     runs-on: ubuntu-latest
-
     steps:
-      # first, checkout the repo
-      - uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      # then, analyse it
-      - name: The PHP Security Checker
-        uses: symfonycorp/security-checker-action@v2
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: Composer Security Audit
+        run: composer audit

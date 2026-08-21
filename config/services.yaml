@@ -8,25 +8,48 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-        public: false       # Allows optimizing the container by removing unused services; this also means
-                            # fetching services directly from the container via $container->get() won't work.
-                            # The best practice is to be explicit about your dependencies anyway.
+        public: false
+
+    _instanceof:
+        App\Service\SubstanceLoaderInterface:
+            tags: ['app.substance_loader']
 
     # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/*'
         exclude: '../src/{Entity,Migrations,Tests,Kernel.php}'
 
-    # controllers are imported separately to make sure services can be injected
-    # as action arguments even if you don't extend any base controller class
+    # controllers are imported separately
     App\Controller\:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
-    
-    App\Service\SubstanceLoaderInterface: '@App\Service\WikiDataSubstanceLoader'
+    # Concrete Substance Loaders with Priorities
+    App\Service\PubChemSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 100 }
 
-    
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    App\Service\WikiDataSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 80 }
+
+    App\Service\CompToxSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 60 }
+
+    App\Service\GestisSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 40 }
+
+    App\Service\SigmaAldrichSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 20 }
+
+    # Chain Loader injecting all tagged loaders
+    App\Service\ChainSubstanceLoader:
+        arguments:
+            $loaders: !tagged_iterator app.substance_loader
+
+    # Bind Interface to Chain Loader
+    App\Service\SubstanceLoaderInterface: '@App\Service\ChainSubstanceLoader'
+

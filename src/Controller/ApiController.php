@@ -1,39 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Request;
-use JMS\SerializerBundle\Serializer;
-use App\Service\SubstanceLoaderInterface;
 use App\Entity\Substance;
+use App\Service\SubstanceLoaderInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
-class ApiController extends AbstractController {
+class ApiController extends AbstractController
+{
+    #[Route('/api/{format}/substance', name: 'api_substance')]
+    public function getSubstanceAction(
+        Request $request,
+        string $format,
+        SubstanceLoaderInterface $substanceLoader,
+        ?string $search = null
+    ): Response {
+        $searchTerm = $search
+            ?? $request->query->get('search')
+            ?? $request->request->get('search')
+            ?? $request->attributes->get('search');
 
-    /**
-     * @Route("/api/{format}/substance", name="api_substance")
-     */
-    public function getSubstanceAction(Request $request, $format, SubstanceLoaderInterface $substanceLoader, $search = FALSE) {
-        $name = 'search';
-        if (!$search) {
-            $search = $request->query->has($name) ? $request->query->get($name) : $request->request->get($name);
+        if (!$searchTerm) {
+            throw $this->createNotFoundException('no search parameter given');
         }
-        if (!$search) {
-            throw $this->createAccessDeniedException('no search parameter given');
-        }
 
-        $data = $substanceLoader->loadSubstance($search);
+        $data = $substanceLoader->loadSubstance((string) $searchTerm);
 
         if (!($data instanceof Substance)) {
-            throw $this->createNotFoundException('no substance found for ' . $search);
+            throw $this->createNotFoundException('no substance found for ' . $searchTerm);
         }
 
-        return $this->render('api/substance.twig', array(
-                    'format' => $format,
-                    'data' => $data
-        ));
+        return $this->render('api/substance.twig', [
+            'format' => $format,
+            'data' => $data,
+        ]);
     }
-
 }
+

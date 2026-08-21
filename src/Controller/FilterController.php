@@ -1,38 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Request;
-use Psr\Log\LoggerInterface;
-use App\Service\SubstanceLoaderInterface;
 use App\Form\SimpleSearchType;
-use App\Repository\SubstanceRepository;
+use App\Service\SubstanceLoaderInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
-class FilterController extends AbstractController {
-
-    /**
-     * @Route("/filter", name="filter")
-     */
-    public function index(Request $request, SubstanceLoaderInterface $substanceLoader, LoggerInterface $logger) {
+class FilterController extends AbstractController
+{
+    #[Route('/filter', name: 'filter')]
+    public function index(
+        Request $request,
+        SubstanceLoaderInterface $substanceLoader,
+        LoggerInterface $logger
+    ): Response {
         $form = $this->createForm(SimpleSearchType::class);
         $form->handleRequest($request);
 
-        $data = false;
+        $data = null;
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-            $data = $substanceLoader->loadSubstance($form->get('search')->getData());
-            } catch (\Exception $e) {
-            $logger->warning("Error while loading substance", array('exception' => $e));
+                $searchTerm = (string) $form->get('search')->getData();
+                $data = $substanceLoader->loadSubstance($searchTerm);
+            } catch (\Throwable $e) {
+                $logger->warning('Error while loading substance: ' . $e->getMessage(), ['exception' => $e]);
             }
         }
 
-        return $this->render('filter/index.html.twig', array(
-                    'substance' => $data,
-                    'form' => $form->createView()
-        ));
+        return $this->render('filter/index.html.twig', [
+            'substance' => $data,
+            'form' => $form->createView(),
+        ]);
     }
-
 }
+
