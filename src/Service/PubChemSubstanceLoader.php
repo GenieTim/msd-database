@@ -90,6 +90,29 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
                 $substance->setFormula((string) $properties['MolecularFormula']);
             }
 
+            // Molecular Weight
+            if (isset($properties['MolecularWeight']) && is_numeric($properties['MolecularWeight'])) {
+                $substance->setMolecularWeight((float) $properties['MolecularWeight']);
+            }
+
+            // SMILES
+            if (!empty($properties['CanonicalSMILES'])) {
+                $substance->setSmiles((string) $properties['CanonicalSMILES']);
+            }
+
+            // InChI & InChIKey
+            if (!empty($properties['InChI'])) {
+                $substance->setInchi((string) $properties['InChI']);
+            }
+            if (!empty($properties['InChIKey'])) {
+                $substance->setInchikey((string) $properties['InChIKey']);
+            }
+
+            // Synonyms
+            if ($synonyms !== []) {
+                $substance->setSynonyms($synonyms);
+            }
+
             // CAS Number
             $casNumber = $this->extractCasNumber($search, $synonyms);
             if ($casNumber !== null) {
@@ -181,7 +204,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
     private function fetchCompoundProperties(int $cid): array
     {
         $url = sprintf(
-            '%s/compound/cid/%d/property/MolecularFormula,MolecularWeight,IUPACName,Title/JSON',
+            '%s/compound/cid/%d/property/MolecularFormula,MolecularWeight,IUPACName,Title,CanonicalSMILES,InChI,InChIKey/JSON',
             self::PUG_REST_BASE,
             $cid
         );

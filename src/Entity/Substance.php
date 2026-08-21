@@ -61,6 +61,33 @@ class Substance
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, nullable: true)]
     private ?string $source = null;
 
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::FLOAT, nullable: true)]
+    private ?float $molecular_weight = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 1024, nullable: true)]
+    private ?string $smiles = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 2048, nullable: true)]
+    private ?string $inchi = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 64, nullable: true)]
+    private ?string $inchikey = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, nullable: true)]
+    private ?string $boiling_point = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, nullable: true)]
+    private ?string $melting_point = null;
+
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255, nullable: true)]
+    private ?string $density = null;
+
+    /**
+     * @var array<string>|null
+     */
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::JSON, nullable: true)]
+    private ?array $synonyms = null;
+
     public function __construct()
     {
         $this->symbols = new ArrayCollection();
@@ -252,5 +279,157 @@ class Substance
 
         return $this;
     }
-}
 
+    public function getMolecularWeight(): ?float
+    {
+        return $this->molecular_weight;
+    }
+
+    public function setMolecularWeight(?float $molecular_weight): self
+    {
+        $this->molecular_weight = $molecular_weight;
+
+        return $this;
+    }
+
+    public function getSmiles(): ?string
+    {
+        return $this->smiles;
+    }
+
+    public function setSmiles(?string $smiles): self
+    {
+        $this->smiles = $smiles !== null ? trim($smiles) : null;
+
+        return $this;
+    }
+
+    public function getInchi(): ?string
+    {
+        return $this->inchi;
+    }
+
+    public function setInchi(?string $inchi): self
+    {
+        $this->inchi = $inchi !== null ? trim($inchi) : null;
+
+        return $this;
+    }
+
+    public function getInchiKey(): ?string
+    {
+        return $this->inchikey;
+    }
+
+    public function setInchiKey(?string $inchikey): self
+    {
+        $this->inchikey = $inchikey !== null ? trim($inchikey, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+
+        return $this;
+    }
+
+    public function getBoilingPoint(): ?string
+    {
+        return $this->boiling_point;
+    }
+
+    public function setBoilingPoint(?string $boiling_point): self
+    {
+        $this->boiling_point = $boiling_point !== null ? trim($boiling_point, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+
+        return $this;
+    }
+
+    public function getMeltingPoint(): ?string
+    {
+        return $this->melting_point;
+    }
+
+    public function setMeltingPoint(?string $melting_point): self
+    {
+        $this->melting_point = $melting_point !== null ? trim($melting_point, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+
+        return $this;
+    }
+
+    public function getDensity(): ?string
+    {
+        return $this->density;
+    }
+
+    public function setDensity(?string $density): self
+    {
+        $this->density = $density !== null ? trim($density, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string>|null
+     */
+    public function getSynonyms(): ?array
+    {
+        return $this->synonyms;
+    }
+
+    /**
+     * @param array<string>|null $synonyms
+     */
+    public function setSynonyms(?array $synonyms): self
+    {
+        if ($synonyms !== null) {
+            $cleaned = [];
+            foreach ($synonyms as $s) {
+                $trimmed = trim((string) $s, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+                if ($trimmed !== '') {
+                    $cleaned[] = $trimmed;
+                }
+            }
+            $this->synonyms = $cleaned !== [] ? array_values(array_unique($cleaned)) : null;
+        } else {
+            $this->synonyms = null;
+        }
+
+        return $this;
+    }
+
+    public function addSynonym(string $synonym): self
+    {
+        $trimmed = trim($synonym, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+        if ($trimmed !== '') {
+            $this->synonyms ??= [];
+            if (!in_array($trimmed, $this->synonyms, true)) {
+                $this->synonyms[] = $trimmed;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Helper to return 2D chemical structure image URL.
+     */
+    public function getStructureImageUrl(int|string $size = '300x300'): ?string
+    {
+        $sizeStr = is_int($size) ? sprintf('%dx%d', $size, $size) : (str_contains((string) $size, 'x') ? (string) $size : sprintf('%sx%s', $size, $size));
+        $dimension = is_int($size) ? (string) $size : (preg_match('/^(\d+)/', (string) $size, $m) ? $m[1] : '300');
+
+        if ($this->pubchem_id !== null) {
+            return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/CID/%d/PNG?image_size=%s', $this->pubchem_id, $sizeStr);
+        }
+
+        if ($this->smiles !== null && trim($this->smiles) !== '') {
+            return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/%s/PNG?image_size=%s', rawurlencode(trim($this->smiles)), $sizeStr);
+        }
+
+        if ($this->source !== null && preg_match('/CHEBI[:_]?(\d+)/i', $this->source, $matches)) {
+            return sprintf('https://www.ebi.ac.uk/chebi/displayImage.do?defaultImage=true&imageIndex=0&chebiId=CHEBI:%s&dimensions=%s', $matches[1], $dimension);
+        }
+
+        if ($this->cas_number !== null && trim($this->cas_number) !== '') {
+            return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/%s/PNG?image_size=%s', rawurlencode(trim($this->cas_number)), $sizeStr);
+        }
+
+        return null;
+    }
+}

@@ -150,6 +150,63 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                 $substance->setFormula($formula);
             }
 
+            // SMILES: P233 or P2017
+            $smiles = $this->extractClaimString($claims, 'P233') ?? $this->extractClaimString($claims, 'P2017');
+            if ($smiles) {
+                $substance->setSmiles($smiles);
+            }
+
+            // InChI: P234
+            $inchi = $this->extractClaimString($claims, 'P234');
+            if ($inchi) {
+                $substance->setInchi($inchi);
+            }
+
+            // InChIKey: P235
+            $inchikey = $this->extractClaimString($claims, 'P235');
+            if ($inchikey) {
+                $substance->setInchikey($inchikey);
+            }
+
+            // Molecular Weight: P2067
+            $molWeight = $this->extractClaimQuantity($claims, 'P2067');
+            if ($molWeight !== null) {
+                $substance->setMolecularWeight($molWeight);
+            }
+
+            // Boiling Point: P2102
+            $boilingPoint = $this->extractClaimPhysicalProperty($claims, 'P2102') ?? $this->extractClaimString($claims, 'P2102');
+            if ($boilingPoint !== null) {
+                $substance->setBoilingPoint($boilingPoint);
+            }
+
+            // Melting Point: P2101
+            $meltingPoint = $this->extractClaimPhysicalProperty($claims, 'P2101') ?? $this->extractClaimString($claims, 'P2101');
+            if ($meltingPoint !== null) {
+                $substance->setMeltingPoint($meltingPoint);
+            }
+
+            // Density: P2054
+            $density = $this->extractClaimPhysicalProperty($claims, 'P2054') ?? $this->extractClaimString($claims, 'P2054');
+            if ($density !== null) {
+                $substance->setDensity($density);
+            }
+
+            // Synonyms / Aliases
+            $aliases = [];
+            foreach (['en', 'de'] as $lang) {
+                if (!empty($entity['aliases'][$lang])) {
+                    foreach ($entity['aliases'][$lang] as $aliasItem) {
+                        if (!empty($aliasItem['value'])) {
+                            $aliases[] = (string) $aliasItem['value'];
+                        }
+                    }
+                }
+            }
+            if ($aliases !== []) {
+                $substance->setSynonyms($aliases);
+            }
+
             // RTECS: P657
             $rtecs = $this->extractClaimString($claims, 'P657');
             if ($rtecs) {
@@ -268,6 +325,68 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
             }
         }
         return $ids;
+    }
+
+    /**
+     * Extract numerical quantity from claim datavalue.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private function extractClaimQuantity(array $claims, string $property): ?float
+    {
+        $claimList = $claims[$property] ?? [];
+        if (!empty($claimList[0]['mainsnak']['datavalue']['value'])) {
+            $val = $claimList[0]['mainsnak']['datavalue']['value'];
+            if (is_array($val) && isset($val['amount'])) {
+                $amount = ltrim((string) $val['amount'], '+');
+                return is_numeric($amount) ? (float) $amount : null;
+            }
+            if (is_numeric($val)) {
+                return (float) $val;
+            }
+            if (is_string($val)) {
+                $amount = ltrim($val, '+');
+                return is_numeric($amount) ? (float) $amount : null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract physical property with unit as formatted string.
+     *
+     * @param array<string, mixed> $claims
+     */
+    private function extractClaimPhysicalProperty(array $claims, string $property): ?string
+    {
+        $claimList = $claims[$property] ?? [];
+        if (empty($claimList[0]['mainsnak']['datavalue']['value'])) {
+            return null;
+        }
+
+        $val = $claimList[0]['mainsnak']['datavalue']['value'];
+        if (is_string($val)) {
+            return $val;
+        }
+
+        if (is_array($val) && isset($val['amount'])) {
+            $amount = ltrim((string) $val['amount'], '+');
+            $unit = $val['unit'] ?? '';
+            $unitStr = match ($unit) {
+                'http://www.wikidata.org/entity/Q11579', 'Q11579' => ' K',
+                'http://www.wikidata.org/entity/Q25267', 'Q25267' => ' °C',
+                'http://www.wikidata.org/entity/Q42289', 'Q42289' => ' °F',
+                'http://www.wikidata.org/entity/Q13147228', 'Q13147228' => ' g/cm³',
+                'http://www.wikidata.org/entity/Q180892', 'Q180892' => ' kg/m³',
+                'http://www.wikidata.org/entity/Q646299', 'Q646299' => ' g/mL',
+                default => '',
+            };
+
+            return $amount . $unitStr;
+        }
+
+        return null;
     }
 
     private function mapWikidataPictogram(string $qid): ?string

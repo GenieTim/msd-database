@@ -53,6 +53,10 @@ class PubChemSubstanceLoaderTest extends TestCase
                     'Properties' => [[
                         'CID' => 702,
                         'MolecularFormula' => 'C2H6O',
+                        'MolecularWeight' => 46.07,
+                        'CanonicalSMILES' => 'CCO',
+                        'InChI' => 'InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3',
+                        'InChIKey' => 'LFQSCWFLJHTTHZ-UHFFFAOYSA-N',
                         'IUPACName' => 'ethanol',
                         'Title' => 'Ethanol',
                     ]],
@@ -120,6 +124,10 @@ class PubChemSubstanceLoaderTest extends TestCase
         $this->assertInstanceOf(Substance::class, $substance);
         $this->assertSame('Ethanol', $substance->getName());
         $this->assertSame('C2H6O', $substance->getFormula());
+        $this->assertSame(46.07, $substance->getMolecularWeight());
+        $this->assertSame('CCO', $substance->getSmiles());
+        $this->assertSame('InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3', $substance->getInchi());
+        $this->assertSame('LFQSCWFLJHTTHZ-UHFFFAOYSA-N', $substance->getInchikey());
         $this->assertSame(702, $substance->getPubchemId());
         $this->assertSame('64-17-5', $substance->getCASNumber());
         $this->assertSame('Danger', $substance->getSignalWord());

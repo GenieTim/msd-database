@@ -33,9 +33,21 @@ services:
         tags:
             - { name: 'app.substance_loader', priority: 80 }
 
+    App\Service\EchaSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 75 }
+
+    App\Service\ChebiSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 70 }
+
     App\Service\CompToxSubstanceLoader:
         tags:
             - { name: 'app.substance_loader', priority: 60 }
+
+    App\Service\NistSubstanceLoader:
+        tags:
+            - { name: 'app.substance_loader', priority: 50 }
 
     App\Service\GestisSubstanceLoader:
         tags:
@@ -45,6 +57,15 @@ services:
         tags:
             - { name: 'app.substance_loader', priority: 20 }
 
+    # Twig Extensions
+    App\Twig\ChemicalExtension:
+        tags: ['twig.extension']
+
+    # GHS Label Generator
+    App\Service\GhsLabelGenerator:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     # Chain Loader injecting all tagged loaders
     App\Service\ChainSubstanceLoader:
         arguments:
@@ -52,4 +73,5 @@ services:
 
     # Bind Interface to Chain Loader
     App\Service\SubstanceLoaderInterface: '@App\Service\ChainSubstanceLoader'
+
 

@@ -133,6 +133,31 @@ class ChainSubstanceLoader implements SubstanceLoaderInterface
         if ($target->getRtecs() === null && $source->getRtecs() !== null) {
             $target->setRtecs($source->getRtecs());
         }
+        if ($target->getMolecularWeight() === null && $source->getMolecularWeight() !== null) {
+            $target->setMolecularWeight($source->getMolecularWeight());
+        }
+        if ($target->getSmiles() === null && $source->getSmiles() !== null) {
+            $target->setSmiles($source->getSmiles());
+        }
+        if ($target->getInchi() === null && $source->getInchi() !== null) {
+            $target->setInchi($source->getInchi());
+        }
+        if ($target->getInchikey() === null && $source->getInchikey() !== null) {
+            $target->setInchikey($source->getInchikey());
+        }
+        if ($target->getBoilingPoint() === null && $source->getBoilingPoint() !== null) {
+            $target->setBoilingPoint($source->getBoilingPoint());
+        }
+        if ($target->getMeltingPoint() === null && $source->getMeltingPoint() !== null) {
+            $target->setMeltingPoint($source->getMeltingPoint());
+        }
+        if ($target->getDensity() === null && $source->getDensity() !== null) {
+            $target->setDensity($source->getDensity());
+        }
+        if ($source->getSynonyms() !== null) {
+            $mergedSynonyms = array_merge($target->getSynonyms() ?? [], $source->getSynonyms());
+            $target->setSynonyms($mergedSynonyms);
+        }
         if ($target->getStatements()->isEmpty() && !$source->getStatements()->isEmpty()) {
             foreach ($source->getStatements() as $statement) {
                 $target->addStatement($statement);

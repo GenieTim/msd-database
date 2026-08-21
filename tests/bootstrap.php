@@ -31,5 +31,5 @@ if (!is_dir($varDir)) {
     @mkdir($varDir, 0777, true);
 }
 
-passthru(sprintf('php "%s/bin/console" doctrine:schema:create --env=test --no-interaction 2>/dev/null', dirname(__DIR__)));
+passthru(sprintf('php "%s/bin/console" doctrine:schema:update --force --complete --env=test --no-interaction 2>/dev/null', dirname(__DIR__)));
 

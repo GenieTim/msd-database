@@ -37,11 +37,15 @@ Yes, please!
 
 There are quite a few things which could/should be done:
 
+### Data Sources
+- [x] PubChem (NCBI)
+- [x] Wikidata
+- [x] ECHA (European Chemicals Agency — REACH / CLP)
+- [x] ChEBI (EMBL-EBI)
+- [x] EPA CompTox Chemicals Dashboard
+- [x] NIST Chemistry WebBook
+- [x] GESTIS (DGUV)
+- [x] Sigma-Aldrich
+
 ### TODO
-
 - [ ] Improve search speed & stability
-
-Add Sources, e.g.:
-- [ ] DSSTOX
-- [ ] ECHA
-- [ ] Gestis
