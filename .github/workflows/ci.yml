@@ -26,7 +26,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer Dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -88,9 +88,10 @@ jobs:
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Create Test Database Schema
+      - name: Prepare Test Environment
         run: |
-          mkdir -p var
+          mkdir -p var public/build
+          echo '{"entrypoints":{"app":{"js":[],"css":[]}}}' > public/build/entrypoints.json
           php bin/console doctrine:schema:create --env=test
 
       - name: Test Data Importers
