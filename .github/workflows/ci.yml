@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-and-validate:
-    name: Lint & Static Analysis (PHP 8.3)
+    name: Lint & Static Analysis (PHP 8.4)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -17,7 +17,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.4'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, curl
           coverage: none
 
@@ -59,7 +59,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
+        php-version: ['8.4', '8.5']
 
     steps:
       - name: Checkout Code
