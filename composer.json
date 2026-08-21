@@ -15,7 +15,7 @@
         "php": ">=8.2",
         "doctrine/dbal": "^4.4 || 4.5.x-dev",
         "doctrine/doctrine-bundle": "^2.13|^3.0",
-        "doctrine/doctrine-migrations-bundle": "^3.3",
+        "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.0",
         "jms/serializer-bundle": "^5.5",
         "phpdocumentor/reflection-docblock": "^5.4",
