@@ -45,7 +45,9 @@ jobs:
         run: php bin/console lint:twig templates
 
       - name: Validate Doctrine Schema
-        run: php bin/console doctrine:schema:validate --skip-sync
+        run: |
+          mkdir -p var
+          php bin/console doctrine:schema:validate --skip-sync --env=test
 
       - name: Check Rector Rules (Dry Run)
         run: vendor/bin/rector process --dry-run
@@ -77,7 +79,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer Dependencies
-        uses: actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -88,7 +90,7 @@ jobs:
 
       - name: Create Test Database Schema
         run: |
-          php bin/console doctrine:database:create --env=test --if-not-exists
+          mkdir -p var
           php bin/console doctrine:schema:create --env=test
 
       - name: Test Data Importers
