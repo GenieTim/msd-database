@@ -20,8 +20,8 @@ class LabelControllerTest extends WebTestCase
         $substance->setName('Ethanol');
         $substance->setCASNumber('64-17-5');
 
-        $mockLoader = $this->createMock(SubstanceLoaderInterface::class);
-        $mockLoader->method('loadSubstance')->with('64-17-5')->willReturn($substance);
+        $mockLoader = $this->createStub(SubstanceLoaderInterface::class);
+        $mockLoader->method('loadSubstance')->willReturn($substance);
 
         $client->getContainer()->set('App\Service\SubstanceLoaderInterface', $mockLoader);
 
@@ -36,7 +36,7 @@ class LabelControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $mockLoader = $this->createMock(SubstanceLoaderInterface::class);
+        $mockLoader = $this->createStub(SubstanceLoaderInterface::class);
         $mockLoader->method('loadSubstance')->willReturn(null);
 
         $client->getContainer()->set('App\Service\SubstanceLoaderInterface', $mockLoader);

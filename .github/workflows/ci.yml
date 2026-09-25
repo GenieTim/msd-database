@@ -46,7 +46,7 @@ jobs:
 
       - name: Validate Doctrine Schema
         run: |
-          mkdir -p var
+          mkdir -p var var/data
           php bin/console doctrine:schema:validate --skip-sync --env=test
 
       - name: Check Rector Rules (Dry Run)
@@ -90,7 +90,7 @@ jobs:
 
       - name: Prepare Test Environment
         run: |
-          mkdir -p var public/build
+          mkdir -p var var/data public/build
           echo '{"entrypoints":{"app":{"js":[],"css":[]}}}' > public/build/entrypoints.json
           php bin/console doctrine:schema:create --env=test
 

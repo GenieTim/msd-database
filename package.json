@@ -19,7 +19,9 @@
     },
     "dependencies": {
         "@popperjs/core": "^2.11.8",
-        "bootstrap": "^5.3.8",
-        "popper.js": "^1.16.1"
+        "bootstrap": "^5.3.8"
+    },
+    "resolutions": {
+        "nanoid": "^3.3.18"
     }
 }

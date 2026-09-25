@@ -15,12 +15,14 @@ use App\Repository\StatementRepository;
 use App\Repository\SymbolRepository;
 use App\Service\EchaSubstanceLoader;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
+#[AllowMockObjectsWithoutExpectations]
 class EchaSubstanceLoaderTest extends TestCase
 {
     public function testSupports(): void

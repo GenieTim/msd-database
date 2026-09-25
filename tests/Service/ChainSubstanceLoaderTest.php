@@ -18,13 +18,13 @@ class ChainSubstanceLoaderTest extends TestCase
 {
     public function testReturnsCachedSubstanceFromDatabase(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
-        $substanceRepo = $this->createMock(SubstanceRepository::class);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $substanceRepo = $this->createStub(SubstanceRepository::class);
         $em->method('getRepository')->willReturn($substanceRepo);
 
         $cached = new Substance();
         $cached->setName('Cached Substance');
-        $substanceRepo->method('findByAny')->with('test')->willReturn($cached);
+        $substanceRepo->method('findByAny')->willReturn($cached);
 
         $mockLoader = $this->createMock(SubstanceLoaderInterface::class);
         $mockLoader->expects($this->never())->method('loadSubstance');
@@ -37,23 +37,23 @@ class ChainSubstanceLoaderTest extends TestCase
 
     public function testExecutesChainAndEnrichesMissingData(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
-        $substanceRepo = $this->createMock(SubstanceRepository::class);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $substanceRepo = $this->createStub(SubstanceRepository::class);
         $em->method('getRepository')->willReturn($substanceRepo);
         $substanceRepo->method('findByAny')->willReturn(null);
         $substanceRepo->method('findOneBy')->willReturn(null);
 
         // Loader 1 provides name, CAS, formula, but missing statements and symbols
-        $loader1 = $this->createMock(SubstanceLoaderInterface::class);
+        $loader1 = $this->createStub(SubstanceLoaderInterface::class);
         $loader1->method('supports')->willReturn(true);
         $substance1 = new Substance();
         $substance1->setName('Ethanol');
         $substance1->setFormula('C2H6O');
         $substance1->setCASNumber('64-17-5');
-        $loader1->method('loadSubstance')->with('ethanol')->willReturn($substance1);
+        $loader1->method('loadSubstance')->willReturn($substance1);
 
         // Loader 2 provides statements, symbols, signal word
-        $loader2 = $this->createMock(SubstanceLoaderInterface::class);
+        $loader2 = $this->createStub(SubstanceLoaderInterface::class);
         $loader2->method('supports')->willReturn(true);
         $substance2 = new Substance();
         $substance2->setName('Ethanol');
@@ -64,7 +64,7 @@ class ChainSubstanceLoaderTest extends TestCase
         $symbol = new Symbol();
         $symbol->setName('GHS02');
         $substance2->addSymbol($symbol);
-        $loader2->method('loadSubstance')->with('ethanol')->willReturn($substance2);
+        $loader2->method('loadSubstance')->willReturn($substance2);
 
         $chain = new ChainSubstanceLoader([$loader1, $loader2], $em, new NullLogger());
         $result = $chain->loadSubstance('ethanol');

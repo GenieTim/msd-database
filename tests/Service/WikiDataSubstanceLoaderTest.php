@@ -21,10 +21,10 @@ class WikiDataSubstanceLoaderTest extends TestCase
 {
     public function testLoadSubstanceFromWikiData(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
-        $substanceRepo = $this->createMock(SubstanceRepository::class);
-        $statementRepo = $this->createMock(StatementRepository::class);
-        $symbolRepo = $this->createMock(SymbolRepository::class);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $substanceRepo = $this->createStub(SubstanceRepository::class);
+        $statementRepo = $this->createStub(StatementRepository::class);
+        $symbolRepo = $this->createStub(SymbolRepository::class);
 
         $em->method('getRepository')->willReturnCallback(function (string $class) use ($substanceRepo, $statementRepo, $symbolRepo) {
             return match ($class) {

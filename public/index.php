@@ -11,7 +11,7 @@ $env = $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: null;
 
 if ($env === null) {
     if (class_exists(Dotenv::class) && file_exists(dirname(__DIR__).'/.env')) {
-        (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
+        new Dotenv()->bootEnv(dirname(__DIR__).'/.env');
     }
 }
 

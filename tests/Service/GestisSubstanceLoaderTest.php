@@ -43,21 +43,21 @@ class GestisSubstanceLoaderTest extends TestCase
 
         $httpClient = new MockHttpClient([$searchResponse, $articleResponse]);
 
-        $symbolRepo = $this->createMock(SymbolRepository::class);
+        $symbolRepo = $this->createStub(SymbolRepository::class);
         $symbolRepo->method('findOneBy')->willReturnCallback(function (array $criteria) {
             $sym = new Symbol();
             $sym->setName($criteria['name']);
             return $sym;
         });
 
-        $statementRepo = $this->createMock(StatementRepository::class);
+        $statementRepo = $this->createStub(StatementRepository::class);
         $statementRepo->method('findOneBy')->willReturnCallback(function (array $criteria) {
             $stmt = new Statement();
             $stmt->setName($criteria['name']);
             return $stmt;
         });
 
-        $em = $this->createMock(EntityManagerInterface::class);
+        $em = $this->createStub(EntityManagerInterface::class);
 
         $loader = new GestisSubstanceLoader(
             $em,
@@ -83,9 +83,9 @@ class GestisSubstanceLoaderTest extends TestCase
         $searchResponse = new MockResponse(json_encode([], JSON_THROW_ON_ERROR));
         $httpClient = new MockHttpClient([$searchResponse]);
 
-        $symbolRepo = $this->createMock(SymbolRepository::class);
-        $statementRepo = $this->createMock(StatementRepository::class);
-        $em = $this->createMock(EntityManagerInterface::class);
+        $symbolRepo = $this->createStub(SymbolRepository::class);
+        $statementRepo = $this->createStub(StatementRepository::class);
+        $em = $this->createStub(EntityManagerInterface::class);
 
         $loader = new GestisSubstanceLoader(
             $em,
