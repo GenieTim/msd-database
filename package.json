@@ -1,9 +1,13 @@
 {
     "devDependencies": {
+        "@babel/core": "^8.0.6",
+        "@babel/preset-env": "^8.0.6",
         "@symfony/webpack-encore": "^7.1.0",
         "jquery": "^4.0.0",
-        "node-sass": "^9.0.0",
-        "sass-loader": "^17.0.0"
+        "sass": "^1.105.0",
+        "sass-loader": "^17.0.0",
+        "webpack": "^5.111.1",
+        "webpack-cli": "^7.2.3"
     },
     "license": "GPL-3.0-or-later",
     "private": true,

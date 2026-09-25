@@ -1,0 +1,54 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: msd-database:latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-80}:80"
+    environment:
+      # Symfony Environment (production image built with --no-dev)
+      APP_ENV: ${DOCKER_APP_ENV:-prod}
+      APP_DEBUG: ${APP_DEBUG:-0}
+      APP_SECRET: ${APP_SECRET:-change_this_secret_in_coolify_environment}
+
+      # Database: SQLite is used by default with persistent volume storage.
+      # To use PostgreSQL or MySQL/MariaDB instead, update DATABASE_URL:
+      # PostgreSQL: postgresql://user:password@database:5432/msd?serverVersion=16&charset=utf8
+      # MySQL/MariaDB: mysql://user:password@database:3306/msd?serverVersion=10.11-MariaDB&charset=utf8mb4
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///%kernel.project_dir%/var/data/data.db}
+
+      # Coolify reverse proxy configuration
+      SERVER_NAME: :80
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.1}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-.*}
+    volumes:
+      # Persistent volume for SQLite database and data files
+      - app_data:/app/var/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Optional PostgreSQL database (uncomment if you prefer an in-compose database instead of SQLite)
+  # database:
+  #   image: postgres:16-alpine
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB:-msd}
+  #     POSTGRES_USER: ${POSTGRES_USER:-msd}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_postgres_password}
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  app_data:
+  # db_data:

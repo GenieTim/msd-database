@@ -1,4 +1,4 @@
-var Encore = require('@symfony/webpack-encore');
+import Encore from '@symfony/webpack-encore';
 
 Encore
     // the project directory where compiled assets will be stored
@@ -24,4 +24,4 @@ Encore
     .autoProvidejQuery()
     ;
 
-module.exports = Encore.getWebpackConfig();
+export default Encore.getWebpackConfig();
