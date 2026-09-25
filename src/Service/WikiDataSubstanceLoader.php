@@ -242,7 +242,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                 $symbolName = $this->mapWikidataPictogram($picId);
                 if ($symbolName) {
                     $symbol = $this->symbolRepo->findOneBy(['name' => $symbolName]);
-                    if (!$symbol) {
+                    if (!$symbol instanceof \App\Entity\Symbol) {
                         $symbol = new Symbol();
                         $symbol->setName($symbolName);
                         $this->em->persist($symbol);

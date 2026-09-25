@@ -166,7 +166,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 $symbolEntities = [];
                 foreach ($symbolCodes as $code) {
                     $sym = $this->symbolRepo->findOneBy(['name' => $code]);
-                    if (!$sym) {
+                    if (!$sym instanceof \App\Entity\Symbol) {
                         $sym = new Symbol();
                         $sym->setName($code);
                         $this->em->persist($sym);
@@ -182,7 +182,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 $hCodes = array_values(array_unique($hMatches[1]));
                 foreach ($hCodes as $hCode) {
                     $stmt = $this->statementRepo->findOneBy(['name' => $hCode]);
-                    if (!$stmt) {
+                    if (!$stmt instanceof \App\Entity\Statement) {
                         $stmt = new Statement();
                         $stmt->setName($hCode);
                         $stmt->setType(Statement::TYPE_H);
@@ -197,7 +197,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 $pCodes = array_values(array_unique($pMatches[1]));
                 foreach ($pCodes as $pCode) {
                     $stmt = $this->statementRepo->findOneBy(['name' => $pCode]);
-                    if (!$stmt) {
+                    if (!$stmt instanceof \App\Entity\Statement) {
                         $stmt = new Statement();
                         $stmt->setName($pCode);
                         $stmt->setType(Statement::TYPE_P);

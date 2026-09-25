@@ -45,13 +45,13 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      */
     public function loadSubstance(string $search): ?Substance {
         $substance = $this->substanceRepo->findByAny($search);
-        if (!$substance) {
+        if (!$substance instanceof \App\Entity\Substance) {
             $returnSubstance = NULL;
             $possibleSubstances = $this->loadProductResults($search);
             if (count($possibleSubstances)) {
                 foreach ($possibleSubstances as $attempt) {
                     $substance = $this->loadSubstanceFromUri($this->normalizeUri($attempt));
-                    if (!$returnSubstance) {
+                    if (!$returnSubstance instanceof \App\Entity\Substance) {
                         $returnSubstance = $substance;
                     }
                     // check again for duplicates as the name could vary from the search

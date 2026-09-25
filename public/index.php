@@ -5,13 +5,13 @@ use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
 
-require dirname(__DIR__).'/vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
 $env = $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: null;
 
 if ($env === null) {
-    if (class_exists(Dotenv::class) && file_exists(dirname(__DIR__).'/.env')) {
-        new Dotenv()->bootEnv(dirname(__DIR__).'/.env');
+    if (class_exists(Dotenv::class) && file_exists(__DIR__.'/../.env')) {
+        new Dotenv()->bootEnv(__DIR__.'/../.env');
     }
 }
 

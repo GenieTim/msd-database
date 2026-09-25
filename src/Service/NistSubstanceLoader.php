@@ -202,9 +202,7 @@ class NistSubstanceLoader implements SubstanceLoaderInterface
             }
 
             // Fallback to first result link
-            if ($bestHref === null) {
-                $bestHref = $links->first()->attr('href');
-            }
+            $bestHref ??= $links->first()->attr('href');
 
             if ($bestHref === null || $bestHref === '') {
                 return null;

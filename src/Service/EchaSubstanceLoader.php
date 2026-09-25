@@ -115,10 +115,8 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
 
             $data = $response->toArray();
             $results = $data['results'] ?? $data['data'] ?? $data['items'] ?? null;
-            if ($results === null) {
-                // The root payload itself might be a list or a single substance object
-                $results = array_is_list($data) ? $data : [$data];
-            }
+            // The root payload itself might be a list or a single substance object
+            $results ??= array_is_list($data) ? $data : [$data];
 
             if (!is_array($results) || $results === []) {
                 return null;
@@ -333,7 +331,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
         $symbolCodes = array_values(array_unique($symbolCodes));
         foreach ($symbolCodes as $code) {
             $sym = $this->symbolRepo->findOneBy(['name' => $code]);
-            if (!$sym) {
+            if (!$sym instanceof \App\Entity\Symbol) {
                 $sym = new Symbol();
                 $sym->setName($code);
                 $this->em->persist($sym);
@@ -391,9 +389,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                     if (preg_match_all('/\bP\d{3}(?:\+P\d{3})*\b/i', $pStr, $pMatches)) {
                         foreach ($pMatches[0] as $match) {
                             $code = strtoupper($match);
-                            if (!isset($statementsMap[$code])) {
-                                $statementsMap[$code] = ['desc' => null, 'type' => Statement::TYPE_P];
-                            }
+                            $statementsMap[$code] ??= ['desc' => null, 'type' => Statement::TYPE_P];
                         }
                     }
                 }
@@ -402,7 +398,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
 
         foreach ($statementsMap as $code => $data) {
             $stmt = $this->statementRepo->findOneBy(['name' => $code]);
-            if (!$stmt) {
+            if (!$stmt instanceof \App\Entity\Statement) {
                 $stmt = new Statement();
                 $stmt->setName($code);
                 $stmt->setType($data['type']);

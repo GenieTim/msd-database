@@ -309,14 +309,10 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
                                 $code = strtoupper(trim($matches[1]));
                                 $desc = trim($matches[2]);
                                 $descClean = preg_replace('/\s*\[.*?\]\s*$/', '', $desc);
-                                if (!isset($result['h_statements'][$code])) {
-                                    $result['h_statements'][$code] = $descClean;
-                                }
+                                $result['h_statements'][$code] ??= $descClean;
                             } elseif (preg_match('/^(H\d{3}[a-zA-Z\+]*(?:\+[H\d{3}[a-zA-Z\+]*)*)/i', $statementStr, $matches)) {
                                 $code = strtoupper(trim($matches[1]));
-                                if (!isset($result['h_statements'][$code])) {
-                                    $result['h_statements'][$code] = null;
-                                }
+                                $result['h_statements'][$code] ??= null;
                             }
                         }
                         break;
@@ -377,7 +373,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
         }
 
         $symbol = $this->symbolRepo->findOneBy(['name' => $name]);
-        if (!$symbol) {
+        if (!$symbol instanceof \App\Entity\Symbol) {
             $symbol = new Symbol();
             $symbol->setName($name);
             $this->em->persist($symbol);
@@ -397,7 +393,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
         }
 
         $statement = $this->statementRepo->findOneBy(['name' => $name]);
-        if (!$statement) {
+        if (!$statement instanceof \App\Entity\Statement) {
             $statement = new Statement();
             $statement->setName($name);
             $statement->setType($type);
