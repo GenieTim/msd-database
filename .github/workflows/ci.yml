@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
 
 jobs:
   lint-and-validate:
@@ -48,6 +48,9 @@ jobs:
         run: |
           mkdir -p var var/data
           php bin/console doctrine:schema:validate --skip-sync --env=test
+
+      - name: Check PHP Code Style
+        run: vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
 
       - name: Check Rector Rules (Dry Run)
         run: vendor/bin/rector process --dry-run

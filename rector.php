@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
 use Rector\Doctrine\Set\DoctrineSetList;
-use Rector\Symfony\Set\SymfonySetList;
 use Rector\Set\ValueObject\SetList;
+use Rector\Symfony\Set\SymfonySetList;
 
 return RectorConfig::configure()
     ->withPaths([
-        __DIR__ . '/src',
-        __DIR__ . '/config',
-        __DIR__ . '/public',
+        __DIR__.'/src',
+        __DIR__.'/config',
+        __DIR__.'/public',
+        __DIR__.'/tests',
     ])
     ->withPhpSets(php84: true)
     ->withAttributesSets(
@@ -30,4 +31,3 @@ return RectorConfig::configure()
         DoctrineSetList::DOCTRINE_CODE_QUALITY,
         DoctrineSetList::ANNOTATIONS_TO_ATTRIBUTES,
     ]);
-
