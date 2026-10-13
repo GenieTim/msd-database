@@ -22,7 +22,7 @@ class ApiControllerTest extends WebTestCase
         $mockLoader = $this->createMock(SubstanceLoaderInterface::class);
         $mockLoader->method('loadSubstance')->with('ethanol')->willReturn($substance);
 
-        $client->getContainer()->set('App\Service\SubstanceLoaderInterface', $mockLoader);
+        $client->getContainer()->set(SubstanceLoaderInterface::class, $mockLoader);
 
         $client->request('GET', '/api/json/substance?search=ethanol');
 
