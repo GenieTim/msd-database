@@ -37,7 +37,7 @@ class DatabaseDumpCommand extends Command
         $this->database = (string) ($params['dbname'] ?? '');
         $this->username = (string) ($params['user'] ?? '');
         $this->password = (string) ($params['password'] ?? '');
-        $this->path = rtrim($kernel->getProjectDir(), '/') . '/data/database-dump.sql';
+        $this->path = rtrim($kernel->getProjectDir(), '/').'/data/database-dump.sql';
         $this->fs = new Filesystem();
     }
 
@@ -54,7 +54,7 @@ class DatabaseDumpCommand extends Command
             $this->path = (string) $filePath;
         }
 
-        $output->writeln(sprintf('<comment>Dumping <fg=green>%s</fg=green> to <fg=green>%s</fg=green> </comment>', $this->database, $this->path));
+        $output->writeln(\sprintf('<comment>Dumping <fg=green>%s</fg=green> to <fg=green>%s</fg=green> </comment>', $this->database, $this->path));
         $this->createDirectoryIfRequired();
         $this->dumpDatabase();
         $output->writeln('<comment>All done.</comment>');
@@ -65,14 +65,14 @@ class DatabaseDumpCommand extends Command
     private function createDirectoryIfRequired(): void
     {
         if (!$this->fs->exists($this->path)) {
-            $this->fs->mkdir(dirname($this->path));
+            $this->fs->mkdir(\dirname($this->path));
         }
     }
 
     private function dumpDatabase(): void
     {
-        $passwordArg = $this->password !== '' ? sprintf('--password=%s', escapeshellarg($this->password)) : '';
-        $cmd = sprintf(
+        $passwordArg = '' !== $this->password ? \sprintf('--password=%s', escapeshellarg($this->password)) : '';
+        $cmd = \sprintf(
             'mysqldump -B %s -u %s %s',
             escapeshellarg($this->database),
             escapeshellarg($this->username),
@@ -82,7 +82,7 @@ class DatabaseDumpCommand extends Command
         $result = $this->runCommand($cmd);
 
         if ($result['exit_status'] > 0) {
-            throw new \RuntimeException('Could not dump database: ' . var_export($result['output'], true));
+            throw new \RuntimeException('Could not dump database: '.var_export($result['output'], true));
         }
 
         $this->fs->dumpFile($this->path, implode("\n", $result['output']));
@@ -95,10 +95,10 @@ class DatabaseDumpCommand extends Command
     {
         $command .= ' 2>&1';
         exec($command, $output, $exitStatus);
+
         return [
             'output' => $output,
             'exit_status' => $exitStatus,
         ];
     }
 }
-

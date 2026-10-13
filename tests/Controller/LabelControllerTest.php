@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\Substance;
-use App\Repository\SubstanceRepository;
-use App\Service\GhsLabelGenerator;
 use App\Service\SubstanceLoaderInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -23,7 +21,7 @@ class LabelControllerTest extends WebTestCase
         $mockLoader = $this->createStub(SubstanceLoaderInterface::class);
         $mockLoader->method('loadSubstance')->willReturn($substance);
 
-        $client->getContainer()->set('App\Service\SubstanceLoaderInterface', $mockLoader);
+        $client->getContainer()->set(SubstanceLoaderInterface::class, $mockLoader);
 
         $client->request('GET', '/substance/search/label/tex?search=64-17-5');
 
@@ -39,7 +37,7 @@ class LabelControllerTest extends WebTestCase
         $mockLoader = $this->createStub(SubstanceLoaderInterface::class);
         $mockLoader->method('loadSubstance')->willReturn(null);
 
-        $client->getContainer()->set('App\Service\SubstanceLoaderInterface', $mockLoader);
+        $client->getContainer()->set(SubstanceLoaderInterface::class, $mockLoader);
 
         $client->request('GET', '/substance/search/label/tex?search=unknown');
 

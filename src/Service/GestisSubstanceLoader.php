@@ -10,13 +10,9 @@ namespace App\Service;
 
 use App\Entity\Statement;
 use App\Entity\Substance;
-use App\Entity\Symbol;
 use App\Repository\StatementRepository;
-use App\Repository\SubstanceRepository;
 use App\Repository\SymbolRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -34,20 +30,20 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
-        #[Autowire('%env(GESTIS_API_TOKEN)%')]
-        private readonly string $apiToken = ''
+        #[Autowire(env: 'GESTIS_API_TOKEN')]
+        private readonly string $apiToken = '',
     ) {
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
@@ -56,24 +52,24 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 'Accept' => 'application/json',
                 'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
             ];
-            if ($this->apiToken !== '') {
-                $headers['Authorization'] = 'Bearer ' . $this->apiToken;
+            if ('' !== $this->apiToken) {
+                $headers['Authorization'] = 'Bearer '.$this->apiToken;
             }
 
             // 1. Search for substance by term or CAS
-            $searchUrl = sprintf('%s/search/%s', self::API_BASE, rawurlencode($search));
+            $searchUrl = \sprintf('%s/search/%s', self::API_BASE, rawurlencode($search));
             $searchResp = $this->httpClient->request('GET', $searchUrl, [
                 'headers' => $headers,
                 'timeout' => 8,
             ]);
 
-            if ($searchResp->getStatusCode() !== 200) {
+            if (200 !== $searchResp->getStatusCode()) {
                 return null;
             }
 
             /** @var array<int, array<string, mixed>> $searchResults */
             $searchResults = $searchResp->toArray();
-            if ($searchResults === []) {
+            if ([] === $searchResults) {
                 return null;
             }
 
@@ -90,7 +86,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             }
 
             // 2. Check exact name match
-            if ($matchedItem === null) {
+            if (null === $matchedItem) {
                 foreach ($searchResults as $item) {
                     if (strtolower((string) ($item['name'] ?? '')) === $searchLower) {
                         $matchedItem = $item;
@@ -100,7 +96,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             }
 
             // 3. Check prefix / contains name match
-            if ($matchedItem === null) {
+            if (null === $matchedItem) {
                 foreach ($searchResults as $item) {
                     $nameLower = strtolower((string) ($item['name'] ?? ''));
                     if (str_starts_with($nameLower, $searchLower)) {
@@ -110,7 +106,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 }
             }
 
-            if ($matchedItem === null) {
+            if (null === $matchedItem) {
                 return null;
             }
 
@@ -120,13 +116,13 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             }
 
             // 2. Fetch full substance article
-            $articleUrl = sprintf('%s/article/en/%s', self::API_BASE, rawurlencode((string) $zvgNr));
+            $articleUrl = \sprintf('%s/article/en/%s', self::API_BASE, rawurlencode((string) $zvgNr));
             $articleResp = $this->httpClient->request('GET', $articleUrl, [
                 'headers' => $headers,
                 'timeout' => 8,
             ]);
 
-            if ($articleResp->getStatusCode() !== 200) {
+            if (200 !== $articleResp->getStatusCode()) {
                 return null;
             }
 
@@ -138,14 +134,14 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             if (!empty($matchedItem['cas_nr'])) {
                 $substance->setCASNumber((string) $matchedItem['cas_nr']);
             }
-            $substance->setSource(sprintf('https://gestis.dguv.de/data?name=%s', $zvgNr));
+            $substance->setSource(\sprintf('https://gestis.dguv.de/data?name=%s', $zvgNr));
 
             // Extract all text content from chapters
             $allText = '';
             foreach ($article['hauptkapitel'] ?? [] as $hk) {
-                $allText .= ' ' . ($hk['text'] ?? '') . ' ' . ($hk['tables'] ?? '');
+                $allText .= ' '.($hk['text'] ?? '').' '.($hk['tables'] ?? '');
                 foreach ($hk['unterkapitel'] ?? [] as $uk) {
-                    $allText .= ' ' . ($uk['text'] ?? '') . ' ' . ($uk['tables'] ?? '');
+                    $allText .= ' '.($uk['text'] ?? '').' '.($uk['tables'] ?? '');
                 }
             }
 
@@ -188,17 +184,17 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 }
             }
 
-            if ($statementEntities !== []) {
+            if ([] !== $statementEntities) {
                 $substance->setStatements($statementEntities);
             }
 
             return $substance;
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('GESTIS lookup for "%s" failed: %s', $search, $e->getMessage()), [
+            $this->logger->warning(\sprintf('GESTIS lookup for "%s" failed: %s', $search, $e->getMessage()), [
                 'exception' => $e,
             ]);
+
             return null;
         }
     }
 }
-

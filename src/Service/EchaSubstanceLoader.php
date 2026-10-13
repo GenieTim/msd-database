@@ -13,7 +13,6 @@ use App\Entity\Substance;
 use App\Entity\Symbol;
 use App\Repository\StatementRepository;
 use App\Repository\SymbolRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -34,27 +33,28 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
         try {
             // 1. Search for substance on ECHA
             $substanceSummary = $this->searchEchaSubstance($search);
-            if ($substanceSummary === null) {
-                $this->logger->info(sprintf('ECHA: No matching substance found for "%s"', $search));
+            if (null === $substanceSummary) {
+                $this->logger->info(\sprintf('ECHA: No matching substance found for "%s"', $search));
+
                 return null;
             }
 
@@ -69,16 +69,17 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                 ?? null;
 
             $details = null;
-            if (!$hasClp && $substanceId !== null) {
+            if (!$hasClp && null !== $substanceId) {
                 $details = $this->fetchEchaDetails((string) $substanceId);
             }
 
             // 3. Construct Substance entity
             return $this->buildSubstance($search, $substanceSummary, $details);
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('ECHA loader failed for "%s": %s', $search, $e->getMessage()), [
+            $this->logger->warning(\sprintf('ECHA loader failed for "%s": %s', $search, $e->getMessage()), [
                 'exception' => $e,
             ]);
+
             return null;
         }
     }
@@ -108,7 +109,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ]);
 
             $statusCode = $response->getStatusCode();
-            if ($statusCode !== 200) {
+            if (200 !== $statusCode) {
                 return null;
             }
 
@@ -117,14 +118,14 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             // The root payload itself might be a list or a single substance object
             $results ??= array_is_list($data) ? $data : [$data];
 
-            if (!is_array($results) || $results === []) {
+            if (!\is_array($results) || [] === $results) {
                 return null;
             }
 
             // Find best matching item
             $queryLower = strtolower($query);
             foreach ($results as $item) {
-                if (!is_array($item)) {
+                if (!\is_array($item)) {
                     continue;
                 }
                 $cas = $item['cas_number'] ?? $item['casNumber'] ?? $item['identifiers']['casNumber'] ?? '';
@@ -132,17 +133,18 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                 $name = $item['name'] ?? $item['substanceName'] ?? '';
 
                 if (
-                    strtolower((string) $cas) === $queryLower ||
-                    strtolower((string) $ec) === $queryLower ||
-                    strtolower((string) $name) === $queryLower
+                    strtolower((string) $cas) === $queryLower
+                    || strtolower((string) $ec) === $queryLower
+                    || strtolower((string) $name) === $queryLower
                 ) {
                     return $item;
                 }
             }
 
-            return is_array($results[0]) ? $results[0] : null;
+            return \is_array($results[0]) ? $results[0] : null;
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('ECHA search request failed for "%s": %s', $query, $e->getMessage()));
+            $this->logger->warning(\sprintf('ECHA search request failed for "%s": %s', $query, $e->getMessage()));
+
             return null;
         }
     }
@@ -155,7 +157,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
     private function fetchEchaDetails(string $substanceId): ?array
     {
         try {
-            $url = sprintf('%s/%s', self::ECHA_DETAILS_URL, rawurlencode($substanceId));
+            $url = \sprintf('%s/%s', self::ECHA_DETAILS_URL, rawurlencode($substanceId));
             $response = $this->httpClient->request('GET', $url, [
                 'headers' => [
                     'Accept' => 'application/json',
@@ -164,13 +166,14 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                 'timeout' => 10,
             ]);
 
-            if ($response->getStatusCode() !== 200) {
+            if (200 !== $response->getStatusCode()) {
                 return null;
             }
 
             return $response->toArray();
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('ECHA detail fetch failed for id "%s": %s', $substanceId, $e->getMessage()));
+            $this->logger->warning(\sprintf('ECHA detail fetch failed for id "%s": %s', $substanceId, $e->getMessage()));
+
             return null;
         }
     }
@@ -178,7 +181,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
     /**
      * Build Substance entity from ECHA search summary and details payload.
      *
-     * @param array<string, mixed> $summary
+     * @param array<string, mixed>      $summary
      * @param array<string, mixed>|null $details
      */
     private function buildSubstance(string $search, array $summary, ?array $details): Substance
@@ -192,7 +195,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? $summary['substanceName']
             ?? null;
 
-        if ($name === null || $name === '') {
+        if (null === $name || '' === $name) {
             $name = $search;
         }
         $substance->setName((string) $name);
@@ -206,7 +209,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? $summary['identifiers']['formula']
             ?? null;
 
-        if ($formula !== null && $formula !== '') {
+        if (null !== $formula && '' !== $formula) {
             $substance->setFormula((string) $formula);
         }
 
@@ -219,7 +222,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? $summary['identifiers']['casNumber']
             ?? null;
 
-        if ($casNumber !== null && preg_match(self::CAS_REGEX, (string) $casNumber)) {
+        if (null !== $casNumber && preg_match(self::CAS_REGEX, (string) $casNumber)) {
             $substance->setCASNumber((string) $casNumber);
         } elseif (preg_match(self::CAS_REGEX, $search)) {
             $substance->setCASNumber($search);
@@ -240,8 +243,8 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? $summary['identifiers']['ecNumber']
             ?? null;
 
-        if ($substanceId !== null) {
-            $substance->setSource(sprintf('https://echa.europa.eu/substance-information/-/substanceinfo/%s', rawurlencode((string) $substanceId)));
+        if (null !== $substanceId) {
+            $substance->setSource(\sprintf('https://echa.europa.eu/substance-information/-/substanceinfo/%s', rawurlencode((string) $substanceId)));
         } else {
             $substance->setSource('https://echa.europa.eu/');
         }
@@ -264,7 +267,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? $summary['signalWord']
             ?? null;
 
-        if ($signalWord !== null && $signalWord !== '') {
+        if (null !== $signalWord && '' !== $signalWord) {
             $substance->setSignalWord(ucfirst(strtolower((string) $signalWord)));
         }
 
@@ -279,7 +282,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? [];
 
         $symbols = $this->parseSymbols($rawSymbols);
-        if ($symbols !== []) {
+        if ([] !== $symbols) {
             $substance->setSymbols($symbols);
         }
 
@@ -297,7 +300,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
             ?? [];
 
         $statements = $this->parseStatements($hStatements, $pStatements);
-        if ($statements !== []) {
+        if ([] !== $statements) {
             $substance->setStatements($statements);
         }
 
@@ -311,7 +314,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
      */
     private function parseSymbols(mixed $rawSymbols): array
     {
-        if (!is_array($rawSymbols)) {
+        if (!\is_array($rawSymbols)) {
             return [];
         }
 
@@ -319,7 +322,7 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
         $symbolCodes = [];
 
         foreach ($rawSymbols as $symbol) {
-            $symbolStr = is_array($symbol) ? ($symbol['code'] ?? $symbol['name'] ?? '') : (string) $symbol;
+            $symbolStr = \is_array($symbol) ? ($symbol['code'] ?? $symbol['name'] ?? '') : (string) $symbol;
             if (preg_match_all('/GHS0[1-9]/i', $symbolStr, $matches)) {
                 foreach ($matches[0] as $match) {
                     $symbolCodes[] = strtoupper($match);
@@ -350,9 +353,9 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
         $statementEntities = [];
         $statementsMap = []; // code => description
 
-        if (is_array($hStatements)) {
+        if (\is_array($hStatements)) {
             foreach ($hStatements as $h) {
-                if (is_array($h)) {
+                if (\is_array($h)) {
                     $code = trim((string) ($h['code'] ?? $h['name'] ?? ''));
                     $desc = !empty($h['description']) ? trim((string) $h['description']) : null;
                 } else {
@@ -368,18 +371,18 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                     }
                 }
 
-                if ($code !== '' && !isset($statementsMap[$code])) {
+                if ('' !== $code && !isset($statementsMap[$code])) {
                     $statementsMap[$code] = ['desc' => $desc, 'type' => Statement::TYPE_H];
                 }
             }
         }
 
-        if (is_array($pStatements)) {
+        if (\is_array($pStatements)) {
             foreach ($pStatements as $p) {
-                if (is_array($p)) {
+                if (\is_array($p)) {
                     $pCode = trim((string) ($p['code'] ?? $p['name'] ?? ''));
                     $pDesc = !empty($p['description']) ? trim((string) $p['description']) : null;
-                    if ($pCode !== '' && !isset($statementsMap[$pCode])) {
+                    if ('' !== $pCode && !isset($statementsMap[$pCode])) {
                         $statementsMap[$pCode] = ['desc' => $pDesc, 'type' => Statement::TYPE_P];
                     }
                 } else {
@@ -400,10 +403,10 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
                 $stmt = new Statement();
                 $stmt->setName($code);
                 $stmt->setType($data['type']);
-                if ($data['desc'] !== null) {
+                if (null !== $data['desc']) {
                     $stmt->setDescription($data['desc']);
                 }
-            } elseif ($data['desc'] !== null && ($stmt->getDescription() === null || $stmt->getDescription() === '')) {
+            } elseif (null !== $data['desc'] && (null === $stmt->getDescription() || '' === $stmt->getDescription())) {
                 $stmt->setDescription($data['desc']);
             }
             $statementEntities[] = $stmt;

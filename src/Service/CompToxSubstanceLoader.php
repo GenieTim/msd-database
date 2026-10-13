@@ -32,36 +32,37 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
         try {
             $data = $this->queryApi($search);
-            if ($data === null) {
+            if (null === $data) {
                 return null;
             }
 
             $item = $this->extractChemicalRecord($data, $search);
-            if ($item === null) {
+            if (null === $item) {
                 return null;
             }
 
             return $this->buildSubstance($item, $search);
         } catch (\Throwable $e) {
-            $this->logger->info(sprintf('CompTox API search for "%s" skipped/failed: %s', $search, $e->getMessage()));
+            $this->logger->info(\sprintf('CompTox API search for "%s" skipped/failed: %s', $search, $e->getMessage()));
+
             return null;
         }
     }
@@ -75,36 +76,36 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
     {
         // 1. Search by DTXSID
         if (preg_match(self::DTXSID_REGEX, $search)) {
-            $data = $this->requestJson(sprintf('%s/%s', self::SEARCH_EQUAL_URL, rawurlencode($search)));
-            if ($data !== null) {
+            $data = $this->requestJson(\sprintf('%s/%s', self::SEARCH_EQUAL_URL, rawurlencode($search)));
+            if (null !== $data) {
                 return $data;
             }
 
-            return $this->requestJson(sprintf('%s/%s', self::BY_DTXSID_URL, rawurlencode($search)));
+            return $this->requestJson(\sprintf('%s/%s', self::BY_DTXSID_URL, rawurlencode($search)));
         }
 
         // 2. Primary lookup via search/equal endpoint (exact match for CASRN, name, formula, etc.)
-        $data = $this->requestJson(sprintf('%s/%s', self::SEARCH_EQUAL_URL, rawurlencode($search)));
-        if ($data !== null) {
+        $data = $this->requestJson(\sprintf('%s/%s', self::SEARCH_EQUAL_URL, rawurlencode($search)));
+        if (null !== $data) {
             return $data;
         }
 
         // 3. If search looks like a molecular formula, try the by-formula endpoint
         if (preg_match(self::FORMULA_REGEX, $search) && !preg_match('/^\d+$/', $search)) {
-            $data = $this->requestJson(sprintf('%s/%s', self::BY_FORMULA_URL, rawurlencode($search)));
-            if ($data !== null) {
+            $data = $this->requestJson(\sprintf('%s/%s', self::BY_FORMULA_URL, rawurlencode($search)));
+            if (null !== $data) {
                 return $data;
             }
         }
 
         // 4. If search is not a CAS number, try prefix and substring search for chemical names
         if (!preg_match(self::CAS_REGEX, $search)) {
-            $data = $this->requestJson(sprintf('%s/%s', self::SEARCH_START_WITH_URL, rawurlencode($search)));
-            if ($data !== null) {
+            $data = $this->requestJson(\sprintf('%s/%s', self::SEARCH_START_WITH_URL, rawurlencode($search)));
+            if (null !== $data) {
                 return $data;
             }
 
-            return $this->requestJson(sprintf('%s/%s', self::SEARCH_CONTAIN_URL, rawurlencode($search)));
+            return $this->requestJson(\sprintf('%s/%s', self::SEARCH_CONTAIN_URL, rawurlencode($search)));
         }
 
         return null;
@@ -127,28 +128,31 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
             ]);
 
             $statusCode = $response->getStatusCode();
-            if ($statusCode === 404) {
+            if (404 === $statusCode) {
                 return null;
             }
 
-            if ($statusCode === 429) {
-                $this->logger->warning(sprintf('CompTox API rate limit reached for URL: "%s"', $url));
+            if (429 === $statusCode) {
+                $this->logger->warning(\sprintf('CompTox API rate limit reached for URL: "%s"', $url));
+
                 return null;
             }
 
             if ($statusCode < 200 || $statusCode >= 300) {
-                $this->logger->warning(sprintf('CompTox API returned HTTP %d for "%s"', $statusCode, $url));
+                $this->logger->warning(\sprintf('CompTox API returned HTTP %d for "%s"', $statusCode, $url));
+
                 return null;
             }
 
             $data = $response->toArray(false);
-            if ($data === []) {
+            if ([] === $data) {
                 return null;
             }
 
             return $data;
         } catch (\Throwable $e) {
-            $this->logger->info(sprintf('CompTox API request failed for "%s": %s', $url, $e->getMessage()));
+            $this->logger->info(\sprintf('CompTox API request failed for "%s": %s', $url, $e->getMessage()));
+
             return null;
         }
     }
@@ -157,22 +161,23 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
      * Extract the best matching chemical record from API response data.
      *
      * @param array<mixed> $data
+     *
      * @return array<string, mixed>|null
      */
     private function extractChemicalRecord(array $data, string $search): ?array
     {
-        if (isset($data['data']) && is_array($data['data'])) {
+        if (isset($data['data']) && \is_array($data['data'])) {
             $data = $data['data'];
-        } elseif (isset($data['results']) && is_array($data['results'])) {
+        } elseif (isset($data['results']) && \is_array($data['results'])) {
             $data = $data['results'];
         }
 
         if ($this->isAssociativeRecord($data)) {
-            /** @var array<string, mixed> $data */
+            /* @var array<string, mixed> $data */
             return $this->hasChemicalFields($data) ? $data : null;
         }
 
-        if ($data === []) {
+        if ([] === $data) {
             return null;
         }
 
@@ -180,30 +185,30 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
         $lowerSearch = mb_strtolower($search);
 
         foreach ($data as $record) {
-            if (!is_array($record) || !$this->hasChemicalFields($record)) {
+            if (!\is_array($record) || !$this->hasChemicalFields($record)) {
                 continue;
             }
 
-            /** @var array<string, mixed> $record */
+            /* @var array<string, mixed> $record */
             $validRecords[] = $record;
 
             $prefName = $record['preferredName'] ?? $record['preferred_name'] ?? $record['substanceName'] ?? $record['name'] ?? null;
-            if ($prefName !== null && mb_strtolower((string) $prefName) === $lowerSearch) {
+            if (null !== $prefName && mb_strtolower((string) $prefName) === $lowerSearch) {
                 return $record;
             }
 
             $casrn = $record['casrn'] ?? $record['cas_rn'] ?? $record['casNumber'] ?? $record['cas_number'] ?? null;
-            if ($casrn !== null && mb_strtolower((string) $casrn) === $lowerSearch) {
+            if (null !== $casrn && mb_strtolower((string) $casrn) === $lowerSearch) {
                 return $record;
             }
 
             $dtxsid = $record['dtxsid'] ?? $record['dtx_sid'] ?? $record['dsstoxSubstanceId'] ?? null;
-            if ($dtxsid !== null && mb_strtolower((string) $dtxsid) === $lowerSearch) {
+            if (null !== $dtxsid && mb_strtolower((string) $dtxsid) === $lowerSearch) {
                 return $record;
             }
 
             $formula = $record['molFormula'] ?? $record['mol_formula'] ?? $record['formula'] ?? null;
-            if ($formula !== null && mb_strtolower((string) $formula) === $lowerSearch) {
+            if (null !== $formula && mb_strtolower((string) $formula) === $lowerSearch) {
                 return $record;
             }
         }
@@ -216,7 +221,7 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
      */
     private function isAssociativeRecord(array $arr): bool
     {
-        if ($arr === []) {
+        if ([] === $arr) {
             return false;
         }
 
@@ -254,35 +259,35 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
         $substance = new Substance();
 
         $name = $item['preferredName'] ?? $item['preferred_name'] ?? $item['substanceName'] ?? $item['name'] ?? $item['title'] ?? null;
-        $substance->setName($name !== null && trim((string) $name) !== '' ? (string) $name : $search);
+        $substance->setName(null !== $name && '' !== trim((string) $name) ? (string) $name : $search);
 
         $formula = $item['molFormula'] ?? $item['mol_formula'] ?? $item['formula'] ?? $item['molecularFormula'] ?? $item['molecular_formula'] ?? null;
-        if ($formula !== null && trim((string) $formula) !== '') {
+        if (null !== $formula && '' !== trim((string) $formula)) {
             $substance->setFormula((string) $formula);
         }
 
         $casrn = $item['casrn'] ?? $item['cas_rn'] ?? $item['casNumber'] ?? $item['cas_number'] ?? $item['cas'] ?? null;
-        if ($casrn !== null && trim((string) $casrn) !== '') {
+        if (null !== $casrn && '' !== trim((string) $casrn)) {
             $substance->setCASNumber((string) $casrn);
         }
 
         $molWeight = $item['molWeight'] ?? $item['mol_weight'] ?? $item['molecularWeight'] ?? $item['molecular_weight'] ?? null;
-        if ($molWeight !== null && is_numeric($molWeight)) {
+        if (null !== $molWeight && is_numeric($molWeight)) {
             $substance->setMolecularWeight((float) $molWeight);
         }
 
         $smiles = $item['smiles'] ?? $item['canonicalSmiles'] ?? $item['canonical_smiles'] ?? null;
-        if ($smiles !== null && trim((string) $smiles) !== '') {
+        if (null !== $smiles && '' !== trim((string) $smiles)) {
             $substance->setSmiles((string) $smiles);
         }
 
         $inchi = $item['inchi'] ?? $item['inChI'] ?? null;
-        if ($inchi !== null && trim((string) $inchi) !== '') {
+        if (null !== $inchi && '' !== trim((string) $inchi)) {
             $substance->setInchi((string) $inchi);
         }
 
         $inchikey = $item['inchiKey'] ?? $item['inchikey'] ?? $item['inchi_key'] ?? null;
-        if ($inchikey !== null && trim((string) $inchikey) !== '') {
+        if (null !== $inchikey && '' !== trim((string) $inchikey)) {
             $substance->setInchikey((string) $inchikey);
         }
 
@@ -292,7 +297,7 @@ class CompToxSubstanceLoader implements SubstanceLoaderInterface
         }
 
         if (!empty($dtxsid)) {
-            $substance->setSource(sprintf('%s/%s', self::COMPTOX_DETAILS_URL, $dtxsid));
+            $substance->setSource(\sprintf('%s/%s', self::COMPTOX_DETAILS_URL, $dtxsid));
         }
 
         return $substance;

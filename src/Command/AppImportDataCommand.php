@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
- * Import H & P statements from JSON files
+ * Import H & P statements from JSON files.
  */
 #[AsCommand(
     name: 'app:import-data',
@@ -28,10 +28,10 @@ class AppImportDataCommand extends Command
     public function __construct(
         protected EntityManagerInterface $em,
         protected StatementRepository $statementRepo,
-        KernelInterface $kernel
+        KernelInterface $kernel,
     ) {
         parent::__construct();
-        $this->importDir = rtrim($kernel->getProjectDir(), '/') . '/data/';
+        $this->importDir = rtrim($kernel->getProjectDir(), '/').'/data/';
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -50,28 +50,28 @@ class AppImportDataCommand extends Command
     }
 
     /**
-     * Business logic: import the statements from json file
+     * Business logic: import the statements from json file.
      */
     protected function importStatements(StatementRepository $statementRepo, string $statementFile): void
     {
-        $filePath = $this->importDir . $statementFile;
+        $filePath = $this->importDir.$statementFile;
         if (!file_exists($filePath)) {
             return;
         }
 
         $content = file_get_contents($filePath);
-        if ($content === false) {
+        if (false === $content) {
             return;
         }
 
         $statements = json_decode($content, true);
-        if (!is_array($statements)) {
+        if (!\is_array($statements)) {
             return;
         }
 
         foreach ($statements as $key => $statement) {
             $key = (string) $key;
-            if ($key === '') {
+            if ('' === $key) {
                 continue;
             }
             $type = match (strtolower(substr($key, 0, 1))) {
@@ -88,4 +88,3 @@ class AppImportDataCommand extends Command
         $this->em->flush();
     }
 }
-

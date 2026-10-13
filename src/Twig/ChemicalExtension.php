@@ -10,9 +10,6 @@ namespace App\Twig;
 
 use App\Entity\Substance;
 use App\Entity\Symbol;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-use Twig\TwigFunction;
 
 /**
  * ChemicalExtension provides Twig helpers for chemical structure previews,
@@ -91,6 +88,7 @@ class ChemicalExtension
     public function getSymbolBadgeClass(Symbol|string|null $symbol): string
     {
         $code = $this->getGhsSymbolCode($symbol);
+
         return match ($code) {
             'GHS01', 'GHS02', 'GHS03' => 'badge-danger bg-danger text-white',
             'GHS06', 'GHS08' => 'badge-dark bg-dark text-white',
@@ -114,7 +112,7 @@ class ChemicalExtension
     #[\Twig\Attribute\AsTwigFunction(name: 'substance_structure_url')]
     public function getStructureImageUrl(Substance|string|int|null $input, int|string $size = '300x300'): ?string
     {
-        if ($input === null) {
+        if (null === $input) {
             return null;
         }
 
@@ -125,18 +123,18 @@ class ChemicalExtension
             return $input->getStructureImageUrl($sizeStr);
         }
 
-        if (is_int($input)) {
-            return sprintf('%s/compound/CID/%d/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, $input, $sizeStr);
+        if (\is_int($input)) {
+            return \sprintf('%s/compound/CID/%d/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, $input, $sizeStr);
         }
 
         $trimmed = trim($input);
-        if ($trimmed === '') {
+        if ('' === $trimmed) {
             return null;
         }
 
         // 1. Digits only -> PubChem CID
         if (ctype_digit($trimmed)) {
-            return sprintf('%s/compound/CID/%s/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, $trimmed, $sizeStr);
+            return \sprintf('%s/compound/CID/%s/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, $trimmed, $sizeStr);
         }
 
         // 2. ChEBI ID (e.g., CHEBI:15377, CHEBI_15377)
@@ -146,7 +144,7 @@ class ChemicalExtension
 
         // 3. CAS Number (e.g., 64-17-5)
         if (preg_match('/^\d{2,7}-\d{2}-\d$/', $trimmed)) {
-            return sprintf('%s/compound/name/%s/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, rawurlencode($trimmed), $sizeStr);
+            return \sprintf('%s/compound/name/%s/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, rawurlencode($trimmed), $sizeStr);
         }
 
         // 4. Fallback to SMILES representation
@@ -163,7 +161,7 @@ class ChemicalExtension
         $id = preg_replace('/^CHEBI[:_]?/i', '', trim($chebiId));
         $dim = $this->extractDimension($dimensions);
 
-        return sprintf('%s?defaultImage=true&imageIndex=0&chebiId=CHEBI:%s&dimensions=%s', self::CHEBI_IMAGE_BASE, rawurlencode((string) $id), $dim);
+        return \sprintf('%s?defaultImage=true&imageIndex=0&chebiId=CHEBI:%s&dimensions=%s', self::CHEBI_IMAGE_BASE, rawurlencode((string) $id), $dim);
     }
 
     /**
@@ -175,7 +173,7 @@ class ChemicalExtension
     {
         $sizeStr = $this->normalizeSizeString($size);
 
-        return sprintf('%s/compound/smiles/%s/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, rawurlencode(trim($smiles)), $sizeStr);
+        return \sprintf('%s/compound/smiles/%s/PNG?image_size=%s', self::PUBCHEM_PUG_REST_BASE, rawurlencode(trim($smiles)), $sizeStr);
     }
 
     /**
@@ -186,11 +184,11 @@ class ChemicalExtension
     public function getGhsSymbolUrl(Symbol|string|null $symbol): ?string
     {
         $code = $this->getGhsSymbolCode($symbol);
-        if ($code === null) {
+        if (null === $code) {
             return null;
         }
 
-        return sprintf('%s/%s.svg', self::PUBCHEM_GHS_BASE, $code);
+        return \sprintf('%s/%s.svg', self::PUBCHEM_GHS_BASE, $code);
     }
 
     /**
@@ -200,13 +198,13 @@ class ChemicalExtension
     #[\Twig\Attribute\AsTwigFunction(name: 'ghs_symbol_code')]
     public function getGhsSymbolCode(Symbol|string|null $symbol): ?string
     {
-        if ($symbol === null) {
+        if (null === $symbol) {
             return null;
         }
 
         $name = $symbol instanceof Symbol ? (string) $symbol->getName() : $symbol;
         $name = trim($name);
-        if ($name === '') {
+        if ('' === $name) {
             return null;
         }
 
@@ -244,12 +242,12 @@ class ChemicalExtension
     #[\Twig\Attribute\AsTwigFunction(name: 'ghs_symbol_description')]
     public function getGhsSymbolDescription(Symbol|string|null $symbol): ?string
     {
-        if ($symbol instanceof Symbol && $symbol->getDescription() !== null && trim($symbol->getDescription()) !== '') {
+        if ($symbol instanceof Symbol && null !== $symbol->getDescription() && '' !== trim($symbol->getDescription())) {
             return trim($symbol->getDescription());
         }
 
         $code = $this->getGhsSymbolCode($symbol);
-        if ($code !== null && isset(self::GHS_MAP[$code])) {
+        if (null !== $code && isset(self::GHS_MAP[$code])) {
             return self::GHS_MAP[$code]['description'];
         }
 
@@ -257,7 +255,7 @@ class ChemicalExtension
             return $symbol->getName();
         }
 
-        return $symbol !== null && trim($symbol) !== '' ? trim($symbol) : null;
+        return null !== $symbol && '' !== trim($symbol) ? trim($symbol) : null;
     }
 
     /**
@@ -270,16 +268,16 @@ class ChemicalExtension
     #[\Twig\Attribute\AsTwigFunction(name: 'signal_word_badge_class')]
     public function getSignalWordBadgeClass(?string $signalWord): string
     {
-        if ($signalWord === null) {
+        if (null === $signalWord) {
             return 'badge bg-secondary';
         }
 
         $trimmed = strtolower(trim($signalWord));
-        if ($trimmed === 'danger' || str_contains($trimmed, 'danger') || str_contains($trimmed, 'gefahr')) {
+        if ('danger' === $trimmed || str_contains($trimmed, 'danger') || str_contains($trimmed, 'gefahr')) {
             return 'badge bg-danger';
         }
 
-        if ($trimmed === 'warning' || str_contains($trimmed, 'warning') || str_contains($trimmed, 'achtung')) {
+        if ('warning' === $trimmed || str_contains($trimmed, 'warning') || str_contains($trimmed, 'achtung')) {
             return 'badge bg-warning text-dark';
         }
 
@@ -293,11 +291,11 @@ class ChemicalExtension
     #[\Twig\Attribute\AsTwigFunction(name: 'format_formula', isSafe: ['html'])]
     public function formatChemicalFormula(?string $formula): string
     {
-        if ($formula === null || trim($formula) === '') {
+        if (null === $formula || '' === trim($formula)) {
             return '';
         }
 
-        $escaped = htmlspecialchars(trim($formula), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escaped = htmlspecialchars(trim($formula), \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8');
 
         return (string) preg_replace('/(?<=[A-Za-z\)\]])(\d+)/', '<sub>$1</sub>', $escaped);
     }
@@ -309,29 +307,29 @@ class ChemicalExtension
     public function formatPrettyJson(string $json, int $maxArrayItems = 4): string
     {
         $decoded = json_decode($json, true);
-        if (!is_array($decoded)) {
+        if (!\is_array($decoded)) {
             return $json;
         }
 
         if ($maxArrayItems > 0) {
             foreach (['statements', 'synonyms', 'symbols'] as $key) {
-                if (isset($decoded[$key]) && is_array($decoded[$key]) && count($decoded[$key]) > $maxArrayItems) {
-                    $total = count($decoded[$key]);
-                    $decoded[$key] = array_slice($decoded[$key], 0, $maxArrayItems);
-                    $decoded[$key][] = sprintf('... (%d more items)', $total - $maxArrayItems);
+                if (isset($decoded[$key]) && \is_array($decoded[$key]) && \count($decoded[$key]) > $maxArrayItems) {
+                    $total = \count($decoded[$key]);
+                    $decoded[$key] = \array_slice($decoded[$key], 0, $maxArrayItems);
+                    $decoded[$key][] = \sprintf('... (%d more items)', $total - $maxArrayItems);
                 }
             }
         }
 
-        $pretty = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $pretty = json_encode($decoded, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
 
-        return is_string($pretty) ? $pretty : $json;
+        return \is_string($pretty) ? $pretty : $json;
     }
 
     private function normalizeSizeString(int|string $size): string
     {
-        if (is_int($size)) {
-            return sprintf('%dx%d', $size, $size);
+        if (\is_int($size)) {
+            return \sprintf('%dx%d', $size, $size);
         }
 
         $str = trim($size);
@@ -340,7 +338,7 @@ class ChemicalExtension
         }
 
         if (ctype_digit($str)) {
-            return sprintf('%sx%s', $str, $str);
+            return \sprintf('%sx%s', $str, $str);
         }
 
         return '300x300';
@@ -348,7 +346,7 @@ class ChemicalExtension
 
     private function extractDimension(int|string $size): string
     {
-        if (is_int($size)) {
+        if (\is_int($size)) {
             return (string) $size;
         }
 

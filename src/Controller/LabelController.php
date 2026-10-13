@@ -22,7 +22,7 @@ class LabelController extends AbstractController
     public function __construct(
         private readonly GhsLabelGenerator $labelGenerator,
         private readonly SubstanceRepository $substanceRepo,
-        private readonly SubstanceLoaderInterface $substanceLoader
+        private readonly SubstanceLoaderInterface $substanceLoader,
     ) {
     }
 
@@ -52,13 +52,13 @@ class LabelController extends AbstractController
     public function searchTexAction(Request $request): Response
     {
         $search = (string) $request->query->get('search', '');
-        if ($search === '') {
+        if ('' === $search) {
             throw $this->createNotFoundException('No search query provided');
         }
 
         $substance = $this->substanceLoader->loadSubstance($search);
         if (!$substance instanceof Substance) {
-            throw $this->createNotFoundException(sprintf('No substance found for "%s"', $search));
+            throw $this->createNotFoundException(\sprintf('No substance found for "%s"', $search));
         }
 
         return $this->createTexResponse($substance);
@@ -68,13 +68,13 @@ class LabelController extends AbstractController
     public function searchPdfAction(Request $request): Response
     {
         $search = (string) $request->query->get('search', '');
-        if ($search === '') {
+        if ('' === $search) {
             throw $this->createNotFoundException('No search query provided');
         }
 
         $substance = $this->substanceLoader->loadSubstance($search);
         if (!$substance instanceof Substance) {
-            throw $this->createNotFoundException(sprintf('No substance found for "%s"', $search));
+            throw $this->createNotFoundException(\sprintf('No substance found for "%s"', $search));
         }
 
         return $this->createPdfResponse($substance);
@@ -83,11 +83,11 @@ class LabelController extends AbstractController
     private function createTexResponse(Substance $substance): Response
     {
         $tex = $this->labelGenerator->generateTex($substance);
-        $filename = sprintf('ghs-label-%s.tex', $this->sanitizeFilename($substance->getName() ?? 'substance'));
+        $filename = \sprintf('ghs-label-%s.tex', $this->sanitizeFilename($substance->getName() ?? 'substance'));
 
         $response = new Response($tex, Response::HTTP_OK, [
             'Content-Type' => 'text/x-tex; charset=utf-8',
-            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            'Content-Disposition' => \sprintf('attachment; filename="%s"', $filename),
             'X-Content-Type-Options' => 'nosniff',
         ]);
         $response->setPublic();
@@ -99,16 +99,16 @@ class LabelController extends AbstractController
     private function createPdfResponse(Substance $substance): Response
     {
         $pdf = $this->labelGenerator->generatePdf($substance);
-        if ($pdf === null) {
+        if (null === $pdf) {
             // Fallback: if pdflatex isn't installed in environment, return LaTeX
             return $this->createTexResponse($substance);
         }
 
-        $filename = sprintf('ghs-label-%s.pdf', $this->sanitizeFilename($substance->getName() ?? 'substance'));
+        $filename = \sprintf('ghs-label-%s.pdf', $this->sanitizeFilename($substance->getName() ?? 'substance'));
 
         $response = new Response($pdf, Response::HTTP_OK, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => sprintf('inline; filename="%s"', $filename),
+            'Content-Disposition' => \sprintf('inline; filename="%s"', $filename),
             'X-Content-Type-Options' => 'nosniff',
         ]);
         $response->setPublic();

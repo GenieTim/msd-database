@@ -144,6 +144,7 @@ class Substance
     public function setCASNumber(?string $number): static
     {
         $this->cas_number = $number;
+
         return $this;
     }
 
@@ -300,7 +301,7 @@ class Substance
 
     public function setSmiles(?string $smiles): self
     {
-        $this->smiles = $smiles !== null ? trim($smiles) : null;
+        $this->smiles = null !== $smiles ? trim($smiles) : null;
 
         return $this;
     }
@@ -312,7 +313,7 @@ class Substance
 
     public function setInchi(?string $inchi): self
     {
-        $this->inchi = $inchi !== null ? trim($inchi) : null;
+        $this->inchi = null !== $inchi ? trim($inchi) : null;
 
         return $this;
     }
@@ -378,15 +379,15 @@ class Substance
      */
     public function setSynonyms(?array $synonyms): self
     {
-        if ($synonyms !== null) {
+        if (null !== $synonyms) {
             $cleaned = [];
             foreach ($synonyms as $s) {
                 $trimmed = StringCleaner::clean((string) $s);
-                if ($trimmed !== '') {
+                if ('' !== $trimmed) {
                     $cleaned[] = $trimmed;
                 }
             }
-            $this->synonyms = $cleaned !== [] ? array_values(array_unique($cleaned)) : null;
+            $this->synonyms = [] !== $cleaned ? array_values(array_unique($cleaned)) : null;
         } else {
             $this->synonyms = null;
         }
@@ -397,9 +398,9 @@ class Substance
     public function addSynonym(string $synonym): self
     {
         $trimmed = StringCleaner::clean($synonym);
-        if ($trimmed !== '') {
+        if ('' !== $trimmed) {
             $this->synonyms ??= [];
-            if (!in_array($trimmed, $this->synonyms, true)) {
+            if (!\in_array($trimmed, $this->synonyms, true)) {
                 $this->synonyms[] = $trimmed;
             }
         }
@@ -412,23 +413,23 @@ class Substance
      */
     public function getStructureImageUrl(int|string $size = '300x300'): ?string
     {
-        $sizeStr = is_int($size) ? sprintf('%dx%d', $size, $size) : (str_contains($size, 'x') ? $size : sprintf('%sx%s', $size, $size));
-        $dimension = is_int($size) ? (string) $size : (preg_match('/^(\d+)/', $size, $m) ? $m[1] : '300');
+        $sizeStr = \is_int($size) ? \sprintf('%dx%d', $size, $size) : (str_contains($size, 'x') ? $size : \sprintf('%sx%s', $size, $size));
+        $dimension = \is_int($size) ? (string) $size : (preg_match('/^(\d+)/', $size, $m) ? $m[1] : '300');
 
-        if ($this->pubchem_id !== null) {
-            return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/CID/%d/PNG?image_size=%s', $this->pubchem_id, $sizeStr);
+        if (null !== $this->pubchem_id) {
+            return \sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/CID/%d/PNG?image_size=%s', $this->pubchem_id, $sizeStr);
         }
 
-        if ($this->smiles !== null && trim($this->smiles) !== '') {
-            return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/%s/PNG?image_size=%s', rawurlencode(trim($this->smiles)), $sizeStr);
+        if (null !== $this->smiles && '' !== trim($this->smiles)) {
+            return \sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/%s/PNG?image_size=%s', rawurlencode(trim($this->smiles)), $sizeStr);
         }
 
-        if ($this->source !== null && preg_match('/CHEBI[:_]?(\d+)/i', $this->source, $matches)) {
-            return sprintf('https://www.ebi.ac.uk/chebi/displayImage.do?defaultImage=true&imageIndex=0&chebiId=CHEBI:%s&dimensions=%s', $matches[1], $dimension);
+        if (null !== $this->source && preg_match('/CHEBI[:_]?(\d+)/i', $this->source, $matches)) {
+            return \sprintf('https://www.ebi.ac.uk/chebi/displayImage.do?defaultImage=true&imageIndex=0&chebiId=CHEBI:%s&dimensions=%s', $matches[1], $dimension);
         }
 
-        if ($this->cas_number !== null && trim($this->cas_number) !== '') {
-            return sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/%s/PNG?image_size=%s', rawurlencode(trim($this->cas_number)), $sizeStr);
+        if (null !== $this->cas_number && '' !== trim($this->cas_number)) {
+            return \sprintf('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/%s/PNG?image_size=%s', rawurlencode(trim($this->cas_number)), $sizeStr);
         }
 
         return null;

@@ -25,18 +25,19 @@ class StatementRepository extends ServiceEntityRepository
 
     /**
      * @param string|array<string> $search
+     *
      * @return Statement[]
      */
     public function getMatching(string|array $search): array
     {
-        if (is_array($search)) {
+        if (\is_array($search)) {
             $codes = $search;
         } else {
             preg_match_all('/([HP]\d{3}[a-zA-Z\+]*(?:\+[HP]\d{3}[a-zA-Z\+]*)*)/i', $search, $matches);
             $codes = $matches[0];
         }
 
-        if ($codes === []) {
+        if ([] === $codes) {
             return [];
         }
 
@@ -55,11 +56,11 @@ class StatementRepository extends ServiceEntityRepository
             $statement = new Statement();
             $statement->setName($cleanName);
             $statement->setType($type);
-            if ($description !== null && $description !== '') {
+            if (null !== $description && '' !== $description) {
                 $statement->setDescription($description);
             }
             $this->getEntityManager()->persist($statement);
-        } elseif ($description !== null && $description !== '' && empty($statement->getDescription())) {
+        } elseif (null !== $description && '' !== $description && empty($statement->getDescription())) {
             $statement->setDescription($description);
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 /*
  * (c) Tim Bernhard
  */
+
 namespace App\Service;
 
 use App\Entity\Substance;
@@ -26,4 +27,3 @@ interface SubstanceLoaderInterface
      */
     public function supports(string $search): bool;
 }
-

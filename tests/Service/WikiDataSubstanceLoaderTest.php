@@ -26,22 +26,21 @@ class WikiDataSubstanceLoaderTest extends TestCase
         $statementRepo = $this->createStub(StatementRepository::class);
         $symbolRepo = $this->createStub(SymbolRepository::class);
 
-        $em->method('getRepository')->willReturnCallback(function (string $class) use ($substanceRepo, $statementRepo, $symbolRepo) {
-            return match ($class) {
-                Substance::class => $substanceRepo,
-                Statement::class => $statementRepo,
-                Symbol::class => $symbolRepo,
-                default => null,
-            };
+        $em->method('getRepository')->willReturnCallback(static fn (string $class): ?\PHPUnit\Framework\MockObject\Stub => match ($class) {
+            Substance::class => $substanceRepo,
+            Statement::class => $statementRepo,
+            Symbol::class => $symbolRepo,
+            default => null,
         });
 
-        $statementRepo->method('getMatching')->willReturnCallback(function (array $codes) {
+        $statementRepo->method('getMatching')->willReturnCallback(static function (array $codes): array {
             $statements = [];
             foreach ($codes as $code) {
                 $st = new Statement();
                 $st->setName($code);
                 $statements[] = $st;
             }
+
             return $statements;
         });
 

@@ -52,4 +52,3 @@ class Symbol
         return $this;
     }
 }
-

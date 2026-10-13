@@ -9,7 +9,6 @@ use App\Entity\Symbol;
 use App\Repository\StatementRepository;
 use App\Repository\SymbolRepository;
 use App\Service\GestisSubstanceLoader;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -25,7 +24,7 @@ class GestisSubstanceLoaderTest extends TestCase
                 'name' => 'Ethanol',
                 'zvg_nr' => '010420',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $articleResponse = new MockResponse(json_encode([
             'name' => 'Ethanol',
@@ -39,25 +38,25 @@ class GestisSubstanceLoaderTest extends TestCase
                     ],
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse, $articleResponse]);
 
         $symbolRepo = $this->createStub(SymbolRepository::class);
-        $symbolRepo->method('findOneBy')->willReturnCallback(function (array $criteria) {
+        $symbolRepo->method('findOneBy')->willReturnCallback(static function (array $criteria): Symbol {
             $sym = new Symbol();
             $sym->setName($criteria['name']);
+
             return $sym;
         });
 
         $statementRepo = $this->createStub(StatementRepository::class);
-        $statementRepo->method('findOneBy')->willReturnCallback(function (array $criteria) {
+        $statementRepo->method('findOneBy')->willReturnCallback(static function (array $criteria): Statement {
             $stmt = new Statement();
             $stmt->setName($criteria['name']);
+
             return $stmt;
         });
-
-        $em = $this->createStub(EntityManagerInterface::class);
 
         $loader = new GestisSubstanceLoader(
             $statementRepo,
@@ -79,7 +78,7 @@ class GestisSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceReturnsNullWhenNoResultsFound(): void
     {
-        $searchResponse = new MockResponse(json_encode([], JSON_THROW_ON_ERROR));
+        $searchResponse = new MockResponse(json_encode([], \JSON_THROW_ON_ERROR));
         $httpClient = new MockHttpClient([$searchResponse]);
 
         $symbolRepo = $this->createStub(SymbolRepository::class);

@@ -27,19 +27,19 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
@@ -47,17 +47,18 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
             // 1. If direct ChEBI ID
             if (preg_match(self::CHEBI_ID_REGEX, $search, $matches) && !preg_match(self::CAS_REGEX, $search)) {
                 $chebiNumber = $matches[1];
-                $iri = self::CHEBI_OBO_PREFIX . $chebiNumber;
+                $iri = self::CHEBI_OBO_PREFIX.$chebiNumber;
                 $termData = $this->fetchTermByIri($iri);
-                if ($termData !== null) {
+                if (null !== $termData) {
                     return $this->buildSubstanceFromTerm($termData, $search);
                 }
             }
 
             // 2. Search via OLS4 API
             $searchResult = $this->searchOls4($search);
-            if ($searchResult === null || empty($searchResult['response']['docs'])) {
-                $this->logger->info(sprintf('ChEBI: No results found for "%s"', $search));
+            if (null === $searchResult || empty($searchResult['response']['docs'])) {
+                $this->logger->info(\sprintf('ChEBI: No results found for "%s"', $search));
+
                 return null;
             }
 
@@ -67,9 +68,9 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
 
             // If we have an IRI, fetch the complete term details
             $iri = $bestDoc['iri'] ?? null;
-            if (is_string($iri) && $iri !== '') {
+            if (\is_string($iri) && '' !== $iri) {
                 $termData = $this->fetchTermByIri($iri);
-                if ($termData !== null) {
+                if (null !== $termData) {
                     return $this->buildSubstanceFromTerm($termData, $search);
                 }
             }
@@ -77,9 +78,10 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
             // Fallback to building from search doc if term detail fetch fails
             return $this->buildSubstanceFromSearchDoc($bestDoc, $search);
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('ChEBI loader failed for "%s": %s', $search, $e->getMessage()), [
+            $this->logger->warning(\sprintf('ChEBI loader failed for "%s": %s', $search, $e->getMessage()), [
                 'exception' => $e,
             ]);
+
             return null;
         }
     }
@@ -105,13 +107,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
                 'timeout' => 10,
             ]);
 
-            if ($response->getStatusCode() !== 200) {
+            if (200 !== $response->getStatusCode()) {
                 return null;
             }
 
             return $response->toArray();
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('ChEBI OLS4 search request failed for "%s": %s', $query, $e->getMessage()));
+            $this->logger->warning(\sprintf('ChEBI OLS4 search request failed for "%s": %s', $query, $e->getMessage()));
+
             return null;
         }
     }
@@ -126,7 +129,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         try {
             // OLS4 requires double-encoded IRI in URL path
             $encodedIri = rawurlencode(rawurlencode($iri));
-            $url = sprintf('%s/%s', self::OLS4_TERMS_API, $encodedIri);
+            $url = \sprintf('%s/%s', self::OLS4_TERMS_API, $encodedIri);
 
             $response = $this->httpClient->request('GET', $url, [
                 'headers' => [
@@ -136,13 +139,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
                 'timeout' => 10,
             ]);
 
-            if ($response->getStatusCode() !== 200) {
+            if (200 !== $response->getStatusCode()) {
                 return null;
             }
 
             return $response->toArray();
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('ChEBI fetch term failed for IRI "%s": %s', $iri, $e->getMessage()));
+            $this->logger->warning(\sprintf('ChEBI fetch term failed for IRI "%s": %s', $iri, $e->getMessage()));
+
             return null;
         }
     }
@@ -151,6 +155,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      * Select the best matching document from search results.
      *
      * @param array<int, array<string, mixed>> $docs
+     *
      * @return array<string, mixed>
      */
     private function selectBestDoc(array $docs, string $search): array
@@ -184,7 +189,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function buildSubstanceFromTerm(array $term, string $search): Substance
     {
-        if (isset($term['_embedded']['terms'][0]) && is_array($term['_embedded']['terms'][0])) {
+        if (isset($term['_embedded']['terms'][0]) && \is_array($term['_embedded']['terms'][0])) {
             /** @var array<string, mixed> $term */
             $term = $term['_embedded']['terms'][0];
         }
@@ -197,52 +202,52 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
 
         // ChEBI ID & Source link
         $oboId = $term['obo_id'] ?? null;
-        if ($oboId !== null && is_scalar($oboId)) {
-            $substance->setSource(sprintf('https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s', rawurlencode((string) $oboId)));
-        } elseif (!empty($term['iri']) && is_string($term['iri'])) {
+        if (null !== $oboId && \is_scalar($oboId)) {
+            $substance->setSource(\sprintf('https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s', rawurlencode((string) $oboId)));
+        } elseif (!empty($term['iri']) && \is_string($term['iri'])) {
             $substance->setSource($term['iri']);
         }
 
         // Formula
         $formula = $this->extractFormulaFromTerm($term);
-        if ($formula !== null) {
+        if (null !== $formula) {
             $substance->setFormula($formula);
         }
 
         // Molecular Weight
         $mass = $this->extractMassFromTerm($term);
-        if ($mass !== null) {
+        if (null !== $mass) {
             $substance->setMolecularWeight($mass);
         }
 
         // SMILES, InChI, InChIKey
         $smiles = $this->extractSmilesFromTerm($term);
-        if ($smiles !== null) {
+        if (null !== $smiles) {
             $substance->setSmiles($smiles);
         }
 
         $inchi = $this->extractInchiFromTerm($term);
-        if ($inchi !== null) {
+        if (null !== $inchi) {
             $substance->setInchi($inchi);
         }
 
         $inchikey = $this->extractInchiKeyFromTerm($term);
-        if ($inchikey !== null) {
+        if (null !== $inchikey) {
             $substance->setInchikey($inchikey);
         }
 
         // Synonyms
         $synonyms = $this->extractSynonymsFromTerm($term);
-        if ($synonyms !== null && $synonyms !== []) {
+        if (null !== $synonyms && [] !== $synonyms) {
             $substance->setSynonyms($synonyms);
         }
 
         // CAS Number extraction
         $casNumber = $this->extractCasFromTerm($term);
-        if ($casNumber === null && preg_match(self::CAS_REGEX, $search)) {
+        if (null === $casNumber && preg_match(self::CAS_REGEX, $search)) {
             $casNumber = $search;
         }
-        if ($casNumber !== null) {
+        if (null !== $casNumber) {
             $substance->setCASNumber($casNumber);
         }
 
@@ -262,8 +267,8 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         $substance->setName((string) $label);
 
         $oboId = $doc['obo_id'] ?? null;
-        if ($oboId !== null && is_scalar($oboId)) {
-            $substance->setSource(sprintf('https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s', rawurlencode((string) $oboId)));
+        if (null !== $oboId && \is_scalar($oboId)) {
+            $substance->setSource(\sprintf('https://www.ebi.ac.uk/chebi/searchId.do?chebiId=%s', rawurlencode((string) $oboId)));
         }
 
         if (preg_match(self::CAS_REGEX, $search)) {
@@ -280,7 +285,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function extractFormulaFromTerm(array $term): ?string
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
 
         $candidateSources = [
             $annotation['formula'] ?? null,
@@ -292,14 +297,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($candidateSources as $candidate) {
-            if (is_array($candidate) && !empty($candidate[0]) && is_string($candidate[0])) {
+            if (\is_array($candidate) && !empty($candidate[0]) && \is_string($candidate[0])) {
                 $formula = trim($candidate[0]);
-                if ($formula !== '') {
+                if ('' !== $formula) {
                     return $formula;
                 }
-            } elseif (is_string($candidate)) {
+            } elseif (\is_string($candidate)) {
                 $formula = trim($candidate);
-                if ($formula !== '') {
+                if ('' !== $formula) {
                     return $formula;
                 }
             }
@@ -315,7 +320,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function extractCasFromTerm(array $term): ?string
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
 
         $xrefLists = [
             $annotation['database_cross_reference'] ?? [],
@@ -324,11 +329,11 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($xrefLists as $xrefs) {
-            if (!is_array($xrefs)) {
+            if (!\is_array($xrefs)) {
                 continue;
             }
             foreach ($xrefs as $xref) {
-                if (!is_string($xref)) {
+                if (!\is_string($xref)) {
                     continue;
                 }
                 $xrefStr = trim($xref);
@@ -342,12 +347,12 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         }
 
         $oboXrefs = $term['obo_xref'] ?? [];
-        if (is_array($oboXrefs)) {
+        if (\is_array($oboXrefs)) {
             foreach ($oboXrefs as $xref) {
-                if (is_array($xref)) {
+                if (\is_array($xref)) {
                     $database = strtolower(trim((string) ($xref['database'] ?? '')));
                     $id = trim((string) ($xref['id'] ?? ''));
-                    if ($database === 'cas' && preg_match(self::CAS_REGEX, $id)) {
+                    if ('cas' === $database && preg_match(self::CAS_REGEX, $id)) {
                         return $id;
                     }
                     if (preg_match(self::CAS_REGEX, $id)) {
@@ -365,7 +370,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function extractMassFromTerm(array $term): ?float
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
 
         $candidateSources = [
             $annotation['mass'] ?? null,
@@ -376,14 +381,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($candidateSources as $candidate) {
-            if (is_array($candidate) && !empty($candidate[0])) {
+            if (\is_array($candidate) && !empty($candidate[0])) {
                 $val = trim((string) $candidate[0]);
                 if (is_numeric($val)) {
                     return (float) $val;
                 }
             } elseif (is_numeric($candidate)) {
                 return (float) $candidate;
-            } elseif (is_string($candidate)) {
+            } elseif (\is_string($candidate)) {
                 $val = trim($candidate);
                 if (is_numeric($val)) {
                     return (float) $val;
@@ -399,7 +404,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function extractSmilesFromTerm(array $term): ?string
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
 
         $candidateSources = [
             $annotation['smiles'] ?? null,
@@ -408,14 +413,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($candidateSources as $candidate) {
-            if (is_array($candidate) && !empty($candidate[0]) && is_string($candidate[0])) {
+            if (\is_array($candidate) && !empty($candidate[0]) && \is_string($candidate[0])) {
                 $smiles = trim($candidate[0]);
-                if ($smiles !== '') {
+                if ('' !== $smiles) {
                     return $smiles;
                 }
-            } elseif (is_string($candidate)) {
+            } elseif (\is_string($candidate)) {
                 $smiles = trim($candidate);
-                if ($smiles !== '') {
+                if ('' !== $smiles) {
                     return $smiles;
                 }
             }
@@ -429,7 +434,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function extractInchiFromTerm(array $term): ?string
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
 
         $candidateSources = [
             $annotation['inchi'] ?? null,
@@ -438,14 +443,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($candidateSources as $candidate) {
-            if (is_array($candidate) && !empty($candidate[0]) && is_string($candidate[0])) {
+            if (\is_array($candidate) && !empty($candidate[0]) && \is_string($candidate[0])) {
                 $inchi = trim($candidate[0]);
-                if ($inchi !== '') {
+                if ('' !== $inchi) {
                     return $inchi;
                 }
-            } elseif (is_string($candidate)) {
+            } elseif (\is_string($candidate)) {
                 $inchi = trim($candidate);
-                if ($inchi !== '') {
+                if ('' !== $inchi) {
                     return $inchi;
                 }
             }
@@ -459,7 +464,7 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
      */
     private function extractInchiKeyFromTerm(array $term): ?string
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
 
         $candidateSources = [
             $annotation['inchikey'] ?? null,
@@ -468,14 +473,14 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($candidateSources as $candidate) {
-            if (is_array($candidate) && !empty($candidate[0]) && is_string($candidate[0])) {
+            if (\is_array($candidate) && !empty($candidate[0]) && \is_string($candidate[0])) {
                 $inchikey = trim($candidate[0]);
-                if ($inchikey !== '') {
+                if ('' !== $inchikey) {
                     return $inchikey;
                 }
-            } elseif (is_string($candidate)) {
+            } elseif (\is_string($candidate)) {
                 $inchikey = trim($candidate);
-                if ($inchikey !== '') {
+                if ('' !== $inchikey) {
                     return $inchikey;
                 }
             }
@@ -486,11 +491,12 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
 
     /**
      * @param array<string, mixed> $term
+     *
      * @return array<string>|null
      */
     private function extractSynonymsFromTerm(array $term): ?array
     {
-        $annotation = is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
+        $annotation = \is_array($term['annotation'] ?? null) ? $term['annotation'] : [];
         $synonyms = [];
 
         $sources = [
@@ -504,45 +510,45 @@ class ChebiSubstanceLoader implements SubstanceLoaderInterface
         ];
 
         foreach ($sources as $source) {
-            if (is_array($source)) {
+            if (\is_array($source)) {
                 foreach ($source as $item) {
-                    if (is_string($item)) {
+                    if (\is_string($item)) {
                         $trimmed = trim($item);
-                        if ($trimmed !== '') {
+                        if ('' !== $trimmed) {
                             $synonyms[] = $trimmed;
                         }
-                    } elseif (is_array($item) && !empty($item['name']) && is_string($item['name'])) {
+                    } elseif (\is_array($item) && !empty($item['name']) && \is_string($item['name'])) {
                         $trimmed = trim($item['name']);
-                        if ($trimmed !== '') {
+                        if ('' !== $trimmed) {
                             $synonyms[] = $trimmed;
                         }
                     }
                 }
-            } elseif (is_string($source)) {
+            } elseif (\is_string($source)) {
                 $trimmed = trim($source);
-                if ($trimmed !== '') {
+                if ('' !== $trimmed) {
                     $synonyms[] = $trimmed;
                 }
             }
         }
 
         $oboSynonyms = $term['obo_synonym'] ?? [];
-        if (is_array($oboSynonyms)) {
+        if (\is_array($oboSynonyms)) {
             foreach ($oboSynonyms as $item) {
-                if (is_array($item) && !empty($item['name']) && is_string($item['name'])) {
+                if (\is_array($item) && !empty($item['name']) && \is_string($item['name'])) {
                     $trimmed = trim($item['name']);
-                    if ($trimmed !== '') {
+                    if ('' !== $trimmed) {
                         $synonyms[] = $trimmed;
                     }
-                } elseif (is_string($item)) {
+                } elseif (\is_string($item)) {
                     $trimmed = trim($item);
-                    if ($trimmed !== '') {
+                    if ('' !== $trimmed) {
                         $synonyms[] = $trimmed;
                     }
                 }
             }
         }
 
-        return $synonyms !== [] ? array_values(array_unique($synonyms)) : null;
+        return [] !== $synonyms ? array_values(array_unique($synonyms)) : null;
     }
 }

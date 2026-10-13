@@ -26,13 +26,11 @@ class PubChemSubstanceLoaderTest extends TestCase
         $statementRepo = $this->createStub(StatementRepository::class);
         $symbolRepo = $this->createStub(SymbolRepository::class);
 
-        $em->method('getRepository')->willReturnCallback(function (string $class) use ($substanceRepo, $statementRepo, $symbolRepo) {
-            return match ($class) {
-                Substance::class => $substanceRepo,
-                Statement::class => $statementRepo,
-                Symbol::class => $symbolRepo,
-                default => null,
-            };
+        $em->method('getRepository')->willReturnCallback(static fn (string $class): ?\PHPUnit\Framework\MockObject\Stub => match ($class) {
+            Substance::class => $substanceRepo,
+            Statement::class => $statementRepo,
+            Symbol::class => $symbolRepo,
+            default => null,
         });
 
         // 1. Initial DB check -> not found

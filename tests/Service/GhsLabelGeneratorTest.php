@@ -15,7 +15,7 @@ class GhsLabelGeneratorTest extends TestCase
 {
     public function testGenerateTexPopulatesSubstanceData(): void
     {
-        $projectDir = dirname(__DIR__, 2);
+        $projectDir = \dirname(__DIR__, 2);
         $generator = new GhsLabelGenerator($projectDir, new NullLogger());
 
         $substance = new Substance();

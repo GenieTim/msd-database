@@ -27,7 +27,6 @@ class EchaSubstanceLoaderTest extends TestCase
 {
     public function testSupports(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
         $httpClient = new MockHttpClient();
@@ -43,19 +42,20 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceByCasNumberSuccess(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
-        $symbolRepo->method('findOneBy')->willReturnCallback(function (array $criteria) {
+        $symbolRepo->method('findOneBy')->willReturnCallback(static function (array $criteria): Symbol {
             $sym = new Symbol();
             $sym->setName($criteria['name']);
+
             return $sym;
         });
 
-        $statementRepo->method('findOneBy')->willReturnCallback(function (array $criteria) {
+        $statementRepo->method('findOneBy')->willReturnCallback(static function (array $criteria): Statement {
             $stmt = new Statement();
             $stmt->setName($criteria['name']);
+
             return $stmt;
         });
 
@@ -78,7 +78,7 @@ class EchaSubstanceLoaderTest extends TestCase
                     ],
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
@@ -97,7 +97,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceByEcNumberSuccess(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -126,7 +125,7 @@ class EchaSubstanceLoaderTest extends TestCase
                     ],
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
@@ -145,7 +144,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceByChemicalNameSuccess(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -185,7 +183,7 @@ class EchaSubstanceLoaderTest extends TestCase
                     ],
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
@@ -204,7 +202,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceWithSeparateDetailsEndpoint(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -221,7 +218,7 @@ class EchaSubstanceLoaderTest extends TestCase
                     'ec_number' => '200-578-6',
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         // 2. Detail response with full CLP classification
         $detailResponse = new MockResponse(json_encode([
@@ -236,7 +233,7 @@ class EchaSubstanceLoaderTest extends TestCase
                 'hazard_statements' => ['H225', 'H319'],
                 'precautionary_statements' => ['P210', 'P280'],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse, $detailResponse]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
@@ -255,7 +252,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceHarmonisedClassificationFormat(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -287,7 +283,7 @@ class EchaSubstanceLoaderTest extends TestCase
                     'P301+P310',
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
@@ -332,7 +328,7 @@ class EchaSubstanceLoaderTest extends TestCase
                 'hazard_statements' => ['H225'],
                 'precautionary_statements' => [],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
@@ -349,11 +345,10 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceReturnsNullWhenNoResultsFound(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
-        $searchResponse = new MockResponse(json_encode(['results' => []], JSON_THROW_ON_ERROR));
+        $searchResponse = new MockResponse(json_encode(['results' => []], \JSON_THROW_ON_ERROR));
         $httpClient = new MockHttpClient([$searchResponse]);
         $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
@@ -363,7 +358,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceHttp404ReturnsNull(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -377,7 +371,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceHttp500ReturnsNull(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -391,7 +384,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceNetworkExceptionReturnsNull(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
 
@@ -407,7 +399,6 @@ class EchaSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceEmptySearchReturnsNull(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
         $statementRepo = $this->createMock(StatementRepository::class);
         $symbolRepo = $this->createMock(SymbolRepository::class);
         $httpClient = new MockHttpClient();

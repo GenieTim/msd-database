@@ -14,7 +14,6 @@ use App\Entity\Symbol;
 use App\Repository\StatementRepository;
 use App\Repository\SubstanceRepository;
 use App\Repository\SymbolRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -35,30 +34,28 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
         try {
             // 1. Resolve input to PubChem CID
             $cid = $this->resolveToCid($search);
-            if ($cid === null) {
-                $this->logger->warning(sprintf('No PubChem CID found for search term: "%s"', $search));
+            if (null === $cid) {
+                $this->logger->warning(\sprintf('No PubChem CID found for search term: "%s"', $search));
+
                 return null;
             }
 
@@ -78,7 +75,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             // 4. Construct Substance entity
             $substance = new Substance();
             $substance->setPubchemId($cid);
-            $substance->setSource(sprintf('https://pubchem.ncbi.nlm.nih.gov/compound/%d', $cid));
+            $substance->setSource(\sprintf('https://pubchem.ncbi.nlm.nih.gov/compound/%d', $cid));
 
             // Name
             $name = $properties['Title'] ?? $properties['IUPACName'] ?? $search;
@@ -108,13 +105,13 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             }
 
             // Synonyms
-            if ($synonyms !== []) {
+            if ([] !== $synonyms) {
                 $substance->setSynonyms($synonyms);
             }
 
             // CAS Number
             $casNumber = $this->extractCasNumber($search, $synonyms);
-            if ($casNumber !== null) {
+            if (null !== $casNumber) {
                 $substance->setCASNumber($casNumber);
             }
 
@@ -152,9 +149,10 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
 
             return $substance;
         } catch (\Throwable $e) {
-            $this->logger->error(sprintf('Error loading substance from PubChem for "%s": %s', $search, $e->getMessage()), [
+            $this->logger->error(\sprintf('Error loading substance from PubChem for "%s": %s', $search, $e->getMessage()), [
                 'exception' => $e,
             ]);
+
             return null;
         }
     }
@@ -171,14 +169,14 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
 
         // CAS Number format
         if (preg_match(self::CAS_REGEX, $search)) {
-            $url = sprintf('%s/compound/xref/rn/%s/cids/JSON', self::PUG_REST_BASE, rawurlencode($search));
+            $url = \sprintf('%s/compound/xref/rn/%s/cids/JSON', self::PUG_REST_BASE, rawurlencode($search));
             $data = $this->requestJson($url);
             if (!empty($data['IdentifierList']['CID'][0])) {
                 return (int) $data['IdentifierList']['CID'][0];
             }
 
             // Fallback to substance xref
-            $substanceUrl = sprintf('%s/substance/xref/rn/%s/cids/JSON', self::PUG_REST_BASE, rawurlencode($search));
+            $substanceUrl = \sprintf('%s/substance/xref/rn/%s/cids/JSON', self::PUG_REST_BASE, rawurlencode($search));
             $substanceData = $this->requestJson($substanceUrl);
             if (!empty($substanceData['IdentifierList']['CID'][0])) {
                 return (int) $substanceData['IdentifierList']['CID'][0];
@@ -186,7 +184,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
         }
 
         // Search by compound name
-        $nameUrl = sprintf('%s/compound/name/%s/cids/JSON', self::PUG_REST_BASE, rawurlencode($search));
+        $nameUrl = \sprintf('%s/compound/name/%s/cids/JSON', self::PUG_REST_BASE, rawurlencode($search));
         $nameData = $this->requestJson($nameUrl);
         if (!empty($nameData['IdentifierList']['CID'][0])) {
             return (int) $nameData['IdentifierList']['CID'][0];
@@ -202,7 +200,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
      */
     private function fetchCompoundProperties(int $cid): array
     {
-        $url = sprintf(
+        $url = \sprintf(
             '%s/compound/cid/%d/property/MolecularFormula,MolecularWeight,IUPACName,Title,CanonicalSMILES,InChI,InChIKey/JSON',
             self::PUG_REST_BASE,
             $cid
@@ -219,7 +217,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
      */
     private function fetchCompoundSynonyms(int $cid): array
     {
-        $url = sprintf('%s/compound/cid/%d/synonyms/JSON', self::PUG_REST_BASE, $cid);
+        $url = \sprintf('%s/compound/cid/%d/synonyms/JSON', self::PUG_REST_BASE, $cid);
         $data = $this->requestJson($url);
 
         return $data['InformationList']['Information'][0]['Synonym'] ?? [];
@@ -260,7 +258,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             'p_statements' => [],
         ];
 
-        $url = sprintf('%s/data/compound/%d/JSON?heading=GHS+Classification', self::PUG_VIEW_BASE, $cid);
+        $url = \sprintf('%s/data/compound/%d/JSON?heading=GHS+Classification', self::PUG_VIEW_BASE, $cid);
         $data = $this->requestJson($url);
 
         if (empty($data['Record']['Section'])) {
@@ -268,7 +266,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
         }
 
         $ghsSections = $this->findSectionsByHeading($data['Record']['Section'], 'GHS Classification');
-        if ($ghsSections === []) {
+        if ([] === $ghsSections) {
             return $result;
         }
 
@@ -283,7 +281,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
 
                 switch ($name) {
                     case 'Signal':
-                        if ($result['signal_word'] === null && !empty($stringWithMarkup[0]['String'])) {
+                        if (null === $result['signal_word'] && !empty($stringWithMarkup[0]['String'])) {
                             $result['signal_word'] = trim((string) $stringWithMarkup[0]['String']);
                         }
                         break;
@@ -292,7 +290,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
                         foreach ($stringWithMarkup as $item) {
                             if (!empty($item['Markup'])) {
                                 foreach ($item['Markup'] as $markup) {
-                                    $target = ($markup['URL'] ?? '') . ' ' . ($markup['Extra'] ?? '');
+                                    $target = ($markup['URL'] ?? '').' '.($markup['Extra'] ?? '');
                                     if (preg_match('/(GHS0[1-9])/i', $target, $matches)) {
                                         $result['symbols'][] = strtoupper($matches[1]);
                                     }
@@ -344,6 +342,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
      * Recursively find sections matching a specific TOCHeading.
      *
      * @param array<int, mixed> $sections
+     *
      * @return array<int, mixed>
      */
     private function findSectionsByHeading(array $sections, string $heading): array
@@ -353,7 +352,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             if (($section['TOCHeading'] ?? '') === $heading) {
                 $matched[] = $section;
             }
-            if (!empty($section['Section']) && is_array($section['Section'])) {
+            if (!empty($section['Section']) && \is_array($section['Section'])) {
                 $matched = array_merge($matched, $this->findSectionsByHeading($section['Section'], $heading));
             }
         }
@@ -367,7 +366,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
     private function getOrCreateSymbol(string $name): ?Symbol
     {
         $name = trim($name);
-        if ($name === '') {
+        if ('' === $name) {
             return null;
         }
 
@@ -380,7 +379,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
     private function getOrCreateStatement(string $name, ?string $description, int $type): ?Statement
     {
         $name = trim($name);
-        if ($name === '') {
+        if ('' === $name) {
             return null;
         }
 
@@ -404,7 +403,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             ]);
 
             $statusCode = $response->getStatusCode();
-            if ($statusCode === 404) {
+            if (404 === $statusCode) {
                 return null;
             }
 
@@ -412,10 +411,12 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
                 return $response->toArray();
             }
 
-            $this->logger->warning(sprintf('PubChem API returned HTTP %d for "%s"', $statusCode, $url));
+            $this->logger->warning(\sprintf('PubChem API returned HTTP %d for "%s"', $statusCode, $url));
+
             return null;
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('PubChem communication failure for "%s": %s', $url, $e->getMessage()));
+            $this->logger->warning(\sprintf('PubChem communication failure for "%s": %s', $url, $e->getMessage()));
+
             return null;
         }
     }

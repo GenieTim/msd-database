@@ -8,13 +8,9 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\Statement;
 use App\Entity\Substance;
-use App\Entity\Symbol;
 use App\Repository\StatementRepository;
-use App\Repository\SubstanceRepository;
 use App\Repository\SymbolRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -34,31 +30,32 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
         $results = $this->findSubstancesInApi($search);
-        if ($results === []) {
-            $this->logger->warning('no results found by ' . self::class . ' in search for ' . $search);
+        if ([] === $results) {
+            $this->logger->warning('no results found by '.self::class.' in search for '.$search);
+
             return null;
         }
 
         foreach ($results as $result) {
             $entityId = $result['id'];
-            if ($entityId !== '') {
+            if ('' !== $entityId) {
                 $substance = $this->translateApiIdToSubstance($entityId);
                 if ($substance instanceof Substance) {
                     return $substance;
@@ -70,7 +67,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
     }
 
     /**
-     * Find substance results via Wikidata search API
+     * Find substance results via Wikidata search API.
      *
      * @return array<array{id: string, label: string, description?: string}>
      */
@@ -93,20 +90,22 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
             ]);
 
             $data = $response->toArray();
+
             return $data['search'] ?? [];
         } catch (\Throwable $e) {
-            $this->logger->warning('Wikidata search error: ' . $e->getMessage(), ['exception' => $e]);
+            $this->logger->warning('Wikidata search error: '.$e->getMessage(), ['exception' => $e]);
+
             return [];
         }
     }
 
     /**
-     * Load the properties of a substance by Wikidata ID (e.g. Q153)
+     * Load the properties of a substance by Wikidata ID (e.g. Q153).
      */
     public function translateApiIdToSubstance(string $apiId): ?Substance
     {
         try {
-            $url = sprintf('%s/%s.json', self::WIKIDATA_ENTITY_BASE, rawurlencode($apiId));
+            $url = \sprintf('%s/%s.json', self::WIKIDATA_ENTITY_BASE, rawurlencode($apiId));
             $response = $this->httpClient->request('GET', $url, [
                 'headers' => [
                     'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
@@ -129,7 +128,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
             // Label / Name
             $label = $entity['labels'][self::LANGUAGE]['value'] ?? ($entity['labels']['de']['value'] ?? $apiId);
             $substance->setName((string) $label);
-            $substance->setSource('https://www.wikidata.org/wiki/' . $apiId);
+            $substance->setSource('https://www.wikidata.org/wiki/'.$apiId);
 
             // CAS: P231
             $cas = $this->extractClaimString($claims, 'P231');
@@ -169,25 +168,25 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
 
             // Molecular Weight: P2067
             $molWeight = $this->extractClaimQuantity($claims, 'P2067');
-            if ($molWeight !== null) {
+            if (null !== $molWeight) {
                 $substance->setMolecularWeight($molWeight);
             }
 
             // Boiling Point: P2102
             $boilingPoint = $this->extractClaimPhysicalProperty($claims, 'P2102') ?? $this->extractClaimString($claims, 'P2102');
-            if ($boilingPoint !== null) {
+            if (null !== $boilingPoint) {
                 $substance->setBoilingPoint($boilingPoint);
             }
 
             // Melting Point: P2101
             $meltingPoint = $this->extractClaimPhysicalProperty($claims, 'P2101') ?? $this->extractClaimString($claims, 'P2101');
-            if ($meltingPoint !== null) {
+            if (null !== $meltingPoint) {
                 $substance->setMeltingPoint($meltingPoint);
             }
 
             // Density: P2054
             $density = $this->extractClaimPhysicalProperty($claims, 'P2054') ?? $this->extractClaimString($claims, 'P2054');
-            if ($density !== null) {
+            if (null !== $density) {
                 $substance->setDensity($density);
             }
 
@@ -202,7 +201,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                     }
                 }
             }
-            if ($aliases !== []) {
+            if ([] !== $aliases) {
                 $substance->setSynonyms($aliases);
             }
 
@@ -228,7 +227,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                 $this->extractClaimStrings($claims, 'P5041'),
                 $this->extractClaimStrings($claims, 'P5042')
             );
-            if ($statementCodes !== []) {
+            if ([] !== $statementCodes) {
                 $matchingStatements = $this->statementRepo->getMatching($statementCodes);
                 $substance->setStatements($matchingStatements);
             }
@@ -243,21 +242,22 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                     $symbols[] = $this->symbolRepo->findOrCreate($symbolName);
                 }
             }
-            if ($symbols !== []) {
+            if ([] !== $symbols) {
                 $substance->setSymbols($symbols);
             }
 
             return $substance;
         } catch (\Throwable $e) {
-            $this->logger->warning(sprintf('Error resolving Wikidata entity %s: %s', $apiId, $e->getMessage()), [
+            $this->logger->warning(\sprintf('Error resolving Wikidata entity %s: %s', $apiId, $e->getMessage()), [
                 'exception' => $e,
             ]);
+
             return null;
         }
     }
 
     /**
-     * Extract main string value from claims
+     * Extract main string value from claims.
      *
      * @param array<string, mixed> $claims
      */
@@ -266,15 +266,18 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         $claimList = $claims[$property] ?? [];
         if (!empty($claimList[0]['mainsnak']['datavalue']['value'])) {
             $val = $claimList[0]['mainsnak']['datavalue']['value'];
-            return is_string($val) ? $val : null;
+
+            return \is_string($val) ? $val : null;
         }
+
         return null;
     }
 
     /**
-     * Extract multiple string values from claims
+     * Extract multiple string values from claims.
      *
      * @param array<string, mixed> $claims
+     *
      * @return array<string>
      */
     private function extractClaimStrings(array $claims, string $property): array
@@ -283,28 +286,31 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         $claimList = $claims[$property] ?? [];
         foreach ($claimList as $claim) {
             $val = $claim['mainsnak']['datavalue']['value'] ?? null;
-            if (is_string($val)) {
+            if (\is_string($val)) {
                 $values[] = $val;
             }
         }
+
         return $values;
     }
 
     /**
-     * Extract entity ID from claim datavalue
+     * Extract entity ID from claim datavalue.
      *
      * @param array<string, mixed> $claims
      */
     private function extractClaimEntityId(array $claims, string $property): ?string
     {
         $claimList = $claims[$property] ?? [];
+
         return $claimList[0]['mainsnak']['datavalue']['value']['id'] ?? null;
     }
 
     /**
-     * Extract all entity IDs from claim property
+     * Extract all entity IDs from claim property.
      *
      * @param array<string, mixed> $claims
+     *
      * @return array<string>
      */
     private function extractClaimEntityIds(array $claims, string $property): array
@@ -313,10 +319,11 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         $claimList = $claims[$property] ?? [];
         foreach ($claimList as $claim) {
             $id = $claim['mainsnak']['datavalue']['value']['id'] ?? null;
-            if (is_string($id)) {
+            if (\is_string($id)) {
                 $ids[] = $id;
             }
         }
+
         return $ids;
     }
 
@@ -330,15 +337,17 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         $claimList = $claims[$property] ?? [];
         if (!empty($claimList[0]['mainsnak']['datavalue']['value'])) {
             $val = $claimList[0]['mainsnak']['datavalue']['value'];
-            if (is_array($val) && isset($val['amount'])) {
+            if (\is_array($val) && isset($val['amount'])) {
                 $amount = ltrim((string) $val['amount'], '+');
+
                 return is_numeric($amount) ? (float) $amount : null;
             }
             if (is_numeric($val)) {
                 return (float) $val;
             }
-            if (is_string($val)) {
+            if (\is_string($val)) {
                 $amount = ltrim($val, '+');
+
                 return is_numeric($amount) ? (float) $amount : null;
             }
         }
@@ -359,11 +368,11 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         }
 
         $val = $claimList[0]['mainsnak']['datavalue']['value'];
-        if (is_string($val)) {
+        if (\is_string($val)) {
             return $val;
         }
 
-        if (is_array($val) && isset($val['amount'])) {
+        if (\is_array($val) && isset($val['amount'])) {
             $amount = ltrim((string) $val['amount'], '+');
             $unit = $val['unit'] ?? '';
             $unitStr = match ($unit) {
@@ -376,7 +385,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                 default => '',
             };
 
-            return $amount . $unitStr;
+            return $amount.$unitStr;
         }
 
         return null;
@@ -398,4 +407,3 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
         };
     }
 }
-

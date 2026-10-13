@@ -37,7 +37,7 @@ class GhsLabelGenerator
     public function __construct(
         #[Autowire(param: 'kernel.project_dir')]
         private readonly string $projectDir,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -47,11 +47,11 @@ class GhsLabelGenerator
     public function generateTex(
         Substance $substance,
         string $firm = 'Lab Supply - Chemical Inventory',
-        string $contact = 'Emergency Tel: 145'
+        string $contact = 'Emergency Tel: 145',
     ): string {
         // 1. Substance Name
         $name = $substance->getName() ?? 'Unknown Chemical';
-        $chemNameTex = '\huge ' . $this->escapeLatex($name);
+        $chemNameTex = '\huge '.$this->escapeLatex($name);
 
         // 2. Signal Word
         $signalWord = strtoupper($substance->getSignalWord() ?? 'WARNING');
@@ -65,12 +65,12 @@ class GhsLabelGenerator
                 $figurePaths[] = self::SYMBOL_FIGURE_MAP[$symName];
             }
         }
-        $figurePaths = array_slice(array_unique($figurePaths), 0, 4);
+        $figurePaths = \array_slice(array_unique($figurePaths), 0, 4);
 
-        $firstSymbol = isset($figurePaths[0]) ? sprintf('\newcommand{\FirstSymbol}{%s}', $figurePaths[0]) : '';
-        $secondSymbol = isset($figurePaths[1]) ? sprintf('\newcommand{\SecondSymbol}{%s}', $figurePaths[1]) : '';
-        $thirdSymbol = isset($figurePaths[2]) ? sprintf('\newcommand{\ThirdSymbol}{%s}', $figurePaths[2]) : '';
-        $fourthSymbol = isset($figurePaths[3]) ? sprintf('\newcommand{\FourthSymbol}{%s}', $figurePaths[3]) : '';
+        $firstSymbol = isset($figurePaths[0]) ? \sprintf('\newcommand{\FirstSymbol}{%s}', $figurePaths[0]) : '';
+        $secondSymbol = isset($figurePaths[1]) ? \sprintf('\newcommand{\SecondSymbol}{%s}', $figurePaths[1]) : '';
+        $thirdSymbol = isset($figurePaths[2]) ? \sprintf('\newcommand{\ThirdSymbol}{%s}', $figurePaths[2]) : '';
+        $fourthSymbol = isset($figurePaths[3]) ? \sprintf('\newcommand{\FourthSymbol}{%s}', $figurePaths[3]) : '';
 
         // 4. Hazards (H-statements) & Precautions (P-statements)
         $hazardLines = [];
@@ -78,10 +78,10 @@ class GhsLabelGenerator
 
         foreach ($substance->getStatements() as $statement) {
             $code = $this->escapeLatex((string) $statement->getName());
-            $desc = $statement->getDescription() ? ': ' . $this->escapeLatex($statement->getDescription()) : '';
-            $line = $code . $desc . '\\\\';
+            $desc = $statement->getDescription() ? ': '.$this->escapeLatex($statement->getDescription()) : '';
+            $line = $code.$desc.'\\\\';
 
-            if ($statement->getType() === Statement::TYPE_H || str_starts_with($code, 'H') || str_starts_with($code, 'EUH')) {
+            if (Statement::TYPE_H === $statement->getType() || str_starts_with($code, 'H') || str_starts_with($code, 'EUH')) {
                 $hazardLines[] = $line;
             } else {
                 $precautionLines[] = $line;
@@ -94,15 +94,15 @@ class GhsLabelGenerator
         // 5. Additional info (CAS, Formula)
         $additionals = [];
         if ($substance->getCASNumber()) {
-            $additionals[] = 'CAS: ' . $this->escapeLatex($substance->getCASNumber()) . '\\\\';
+            $additionals[] = 'CAS: '.$this->escapeLatex($substance->getCASNumber()).'\\\\';
         }
         if ($substance->getFormula()) {
-            $additionals[] = 'Formula: ' . $this->escapeLatex($substance->getFormula()) . '\\\\';
+            $additionals[] = 'Formula: '.$this->escapeLatex($substance->getFormula()).'\\\\';
         }
         $additionalsTex = implode("\n", $additionals);
 
         // 6. Firm & Contact
-        $firmTex = $this->escapeLatex($firm . ' -- ' . $contact);
+        $firmTex = $this->escapeLatex($firm.' -- '.$contact);
 
         // Build output document by replacing variables in template or injecting definition block
         return <<<LATEX
@@ -176,39 +176,41 @@ LATEX;
     public function generatePdf(Substance $substance): ?string
     {
         $tex = $this->generateTex($substance);
-        $tempDir = sys_get_temp_dir() . '/ghs_label_' . uniqid('', true);
+        $tempDir = sys_get_temp_dir().'/ghs_label_'.uniqid('', true);
         mkdir($tempDir, 0700, true);
 
         try {
-            $texFile = $tempDir . '/label.tex';
+            $texFile = $tempDir.'/label.tex';
             file_put_contents($texFile, $tex);
 
             // Copy figures directory into temp dir so pdflatex can resolve \includegraphics{figures/...}
-            $figuresDir = $this->projectDir . '/GHS-labels/figures';
+            $figuresDir = $this->projectDir.'/GHS-labels/figures';
             if (is_dir($figuresDir)) {
-                mkdir($tempDir . '/figures', 0700, true);
-                foreach (glob($figuresDir . '/*.pdf') ?: [] as $fig) {
-                    copy($fig, $tempDir . '/figures/' . basename($fig));
+                mkdir($tempDir.'/figures', 0700, true);
+                foreach (glob($figuresDir.'/*.pdf') ?: [] as $fig) {
+                    copy($fig, $tempDir.'/figures/'.basename($fig));
                 }
             }
 
             $process = new Process(
                 ['pdflatex', '-no-shell-escape', '-interaction=nonstopmode', 'label.tex'],
                 $tempDir,
-                ['TEXINPUTS' => sprintf('.//:%s//:', $this->projectDir . '/GHS-labels')]
+                ['TEXINPUTS' => \sprintf('.//:%s//:', $this->projectDir.'/GHS-labels')]
             );
             $process->setTimeout(15);
             $process->run();
 
-            $pdfFile = $tempDir . '/label.pdf';
+            $pdfFile = $tempDir.'/label.pdf';
             if (file_exists($pdfFile) && filesize($pdfFile) > 0) {
                 return (string) file_get_contents($pdfFile);
             }
 
-            $this->logger->warning('GHS Label pdflatex compilation returned no PDF output: ' . $process->getErrorOutput());
+            $this->logger->warning('GHS Label pdflatex compilation returned no PDF output: '.$process->getErrorOutput());
+
             return null;
         } catch (\Throwable $e) {
-            $this->logger->warning('GHS Label PDF generation failed: ' . $e->getMessage());
+            $this->logger->warning('GHS Label PDF generation failed: '.$e->getMessage());
+
             return null;
         } finally {
             $this->cleanupDir($tempDir);
@@ -239,10 +241,10 @@ LATEX;
             return;
         }
         foreach (scandir($dir) ?: [] as $file) {
-            if ($file === '.' || $file === '..') {
+            if ('.' === $file || '..' === $file) {
                 continue;
             }
-            $path = $dir . '/' . $file;
+            $path = $dir.'/'.$file;
             if (is_dir($path)) {
                 $this->cleanupDir($path);
             } else {

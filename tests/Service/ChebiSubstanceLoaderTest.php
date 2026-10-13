@@ -23,7 +23,7 @@ class ChebiSubstanceLoaderTest extends TestCase
                 'formula' => ['C2H6O'],
                 'database_cross_reference' => ['cas:64-17-5', 'drugbank:DB00898'],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$termResponse]);
         $loader = new ChebiSubstanceLoader($httpClient, new NullLogger());
@@ -50,7 +50,7 @@ class ChebiSubstanceLoaderTest extends TestCase
                     ],
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $termResponse = new MockResponse(json_encode([
             'label' => 'ethanol',
@@ -60,7 +60,7 @@ class ChebiSubstanceLoaderTest extends TestCase
                 'http://purl.obolibrary.org/obo/chebi/formula' => ['C2H6O'],
                 'database_cross_reference' => ['CAS:64-17-5'],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse, $termResponse]);
         $loader = new ChebiSubstanceLoader($httpClient, new NullLogger());
@@ -86,7 +86,7 @@ class ChebiSubstanceLoaderTest extends TestCase
                     ],
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $termResponse = new MockResponse(json_encode([
             'label' => 'ethanol',
@@ -95,7 +95,7 @@ class ChebiSubstanceLoaderTest extends TestCase
                 'formula' => ['C2H6O'],
                 'database_cross_reference' => ['cas:64-17-5'],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse, $termResponse]);
         $loader = new ChebiSubstanceLoader($httpClient, new NullLogger());
@@ -114,7 +114,7 @@ class ChebiSubstanceLoaderTest extends TestCase
                 'numFound' => 0,
                 'docs' => [],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
         $loader = new ChebiSubstanceLoader($httpClient, new NullLogger());

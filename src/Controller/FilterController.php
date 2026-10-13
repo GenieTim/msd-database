@@ -18,7 +18,7 @@ class FilterController extends AbstractController
     public function index(
         Request $request,
         SubstanceLoaderInterface $substanceLoader,
-        LoggerInterface $logger
+        LoggerInterface $logger,
     ): Response {
         $form = $this->createForm(SimpleSearchType::class);
         $form->handleRequest($request);
@@ -30,7 +30,7 @@ class FilterController extends AbstractController
                 $searchTerm = (string) $form->get('search')->getData();
                 $data = $substanceLoader->loadSubstance($searchTerm);
             } catch (\Throwable $e) {
-                $logger->warning('Error while loading substance: ' . $e->getMessage(), ['exception' => $e]);
+                $logger->warning('Error while loading substance: '.$e->getMessage(), ['exception' => $e]);
             }
         }
 
@@ -41,4 +41,3 @@ class FilterController extends AbstractController
         ]);
     }
 }
-

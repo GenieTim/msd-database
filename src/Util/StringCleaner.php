@@ -14,7 +14,7 @@ final class StringCleaner
 
     public static function trim(?string $value): ?string
     {
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 

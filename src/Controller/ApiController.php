@@ -21,7 +21,7 @@ class ApiController extends AbstractController
         string $format,
         SubstanceLoaderInterface $substanceLoader,
         SerializerInterface $serializer,
-        ?string $search = null
+        ?string $search = null,
     ): Response {
         $searchTerm = $search
             ?? $request->query->get('search')
@@ -34,15 +34,15 @@ class ApiController extends AbstractController
 
         $data = $substanceLoader->loadSubstance((string) $searchTerm);
 
-        if (!($data instanceof Substance)) {
-            throw $this->createNotFoundException('no substance found for ' . $searchTerm);
+        if (!$data instanceof Substance) {
+            throw $this->createNotFoundException('no substance found for '.$searchTerm);
         }
 
         $content = $serializer->serialize($data, $format);
-        $contentType = $format === 'xml' ? 'application/xml' : 'application/json';
+        $contentType = 'xml' === $format ? 'application/xml' : 'application/json';
 
         $response = new Response($content, Response::HTTP_OK, [
-            'Content-Type' => $contentType . '; charset=UTF-8',
+            'Content-Type' => $contentType.'; charset=UTF-8',
             'X-Content-Type-Options' => 'nosniff',
         ]);
         $response->setPublic();

@@ -28,20 +28,20 @@ class ChainSubstanceLoader implements SubstanceLoaderInterface
     public function __construct(
         private readonly iterable $loaders,
         private readonly EntityManagerInterface $em,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
         $this->substanceRepo = $em->getRepository(Substance::class);
     }
 
     public function supports(string $search): bool
     {
-        return trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) !== '';
+        return '' !== trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
     }
 
     public function loadSubstance(string $search): ?Substance
     {
         $search = trim($search, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
-        if ($search === '') {
+        if ('' === $search) {
             return null;
         }
 
@@ -59,11 +59,11 @@ class ChainSubstanceLoader implements SubstanceLoaderInterface
             }
 
             try {
-                $this->logger->info(sprintf('Querying substance loader %s for: "%s"', get_debug_type($loader), $search));
+                $this->logger->info(\sprintf('Querying substance loader %s for: "%s"', get_debug_type($loader), $search));
                 $result = $loader->loadSubstance($search);
 
                 if ($result instanceof Substance) {
-                    if (!$loadedSubstance instanceof \App\Entity\Substance) {
+                    if (!$loadedSubstance instanceof Substance) {
                         $loadedSubstance = $result;
                     } else {
                         $this->enrichSubstance($loadedSubstance, $result);
@@ -71,15 +71,15 @@ class ChainSubstanceLoader implements SubstanceLoaderInterface
 
                     // If we have full data (name, statements, symbols, signal word), stop chain
                     if (
-                        $loadedSubstance->getSignalWord() !== null &&
-                        !$loadedSubstance->getStatements()->isEmpty() &&
-                        !$loadedSubstance->getSymbols()->isEmpty()
+                        null !== $loadedSubstance->getSignalWord()
+                        && !$loadedSubstance->getStatements()->isEmpty()
+                        && !$loadedSubstance->getSymbols()->isEmpty()
                     ) {
                         break;
                     }
                 }
             } catch (\Throwable $e) {
-                $this->logger->warning(sprintf('Loader %s failed for "%s": %s', get_debug_type($loader), $search, $e->getMessage()), [
+                $this->logger->warning(\sprintf('Loader %s failed for "%s": %s', get_debug_type($loader), $search, $e->getMessage()), [
                     'exception' => $e,
                 ]);
             }
@@ -115,46 +115,46 @@ class ChainSubstanceLoader implements SubstanceLoaderInterface
      */
     private function enrichSubstance(Substance $target, Substance $source): void
     {
-        if ($target->getCASNumber() === null && $source->getCASNumber() !== null) {
+        if (null === $target->getCASNumber() && null !== $source->getCASNumber()) {
             $target->setCASNumber($source->getCASNumber());
         }
-        if ($target->getFormula() === null && $source->getFormula() !== null) {
+        if (null === $target->getFormula() && null !== $source->getFormula()) {
             $target->setFormula($source->getFormula());
         }
-        if ($target->getPubchemId() === null && $source->getPubchemId() !== null) {
+        if (null === $target->getPubchemId() && null !== $source->getPubchemId()) {
             $target->setPubchemId($source->getPubchemId());
         }
-        if ($target->getSignalWord() === null && $source->getSignalWord() !== null) {
+        if (null === $target->getSignalWord() && null !== $source->getSignalWord()) {
             $target->setSignalWord($source->getSignalWord());
         }
-        if ($target->getWgkGermany() === null && $source->getWgkGermany() !== null) {
+        if (null === $target->getWgkGermany() && null !== $source->getWgkGermany()) {
             $target->setWgkGermany($source->getWgkGermany());
         }
-        if ($target->getRtecs() === null && $source->getRtecs() !== null) {
+        if (null === $target->getRtecs() && null !== $source->getRtecs()) {
             $target->setRtecs($source->getRtecs());
         }
-        if ($target->getMolecularWeight() === null && $source->getMolecularWeight() !== null) {
+        if (null === $target->getMolecularWeight() && null !== $source->getMolecularWeight()) {
             $target->setMolecularWeight($source->getMolecularWeight());
         }
-        if ($target->getSmiles() === null && $source->getSmiles() !== null) {
+        if (null === $target->getSmiles() && null !== $source->getSmiles()) {
             $target->setSmiles($source->getSmiles());
         }
-        if ($target->getInchi() === null && $source->getInchi() !== null) {
+        if (null === $target->getInchi() && null !== $source->getInchi()) {
             $target->setInchi($source->getInchi());
         }
-        if ($target->getInchikey() === null && $source->getInchikey() !== null) {
+        if (null === $target->getInchikey() && null !== $source->getInchikey()) {
             $target->setInchikey($source->getInchikey());
         }
-        if ($target->getBoilingPoint() === null && $source->getBoilingPoint() !== null) {
+        if (null === $target->getBoilingPoint() && null !== $source->getBoilingPoint()) {
             $target->setBoilingPoint($source->getBoilingPoint());
         }
-        if ($target->getMeltingPoint() === null && $source->getMeltingPoint() !== null) {
+        if (null === $target->getMeltingPoint() && null !== $source->getMeltingPoint()) {
             $target->setMeltingPoint($source->getMeltingPoint());
         }
-        if ($target->getDensity() === null && $source->getDensity() !== null) {
+        if (null === $target->getDensity() && null !== $source->getDensity()) {
             $target->setDensity($source->getDensity());
         }
-        if ($source->getSynonyms() !== null) {
+        if (null !== $source->getSynonyms()) {
             $mergedSynonyms = array_merge($target->getSynonyms() ?? [], $source->getSynonyms());
             $target->setSynonyms($mergedSynonyms);
         }

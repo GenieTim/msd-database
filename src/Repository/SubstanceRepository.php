@@ -26,7 +26,7 @@ class SubstanceRepository extends ServiceEntityRepository
     public function findByAny(string $search): ?Substance
     {
         $val = StringCleaner::clean($search);
-        if ($val === '') {
+        if ('' === $val) {
             return null;
         }
 
@@ -37,7 +37,7 @@ class SubstanceRepository extends ServiceEntityRepository
             ->orWhere('s.name = :val')
             ->orWhere('s.name LIKE :valPattern')
             ->setParameter('val', $val)
-            ->setParameter('valPattern', addcslashes($val, '%_') . '%');
+            ->setParameter('valPattern', addcslashes($val, '%_').'%');
 
         if (ctype_digit($val)) {
             $qb->orWhere('s.pubchem_id = :pubchemId')
@@ -50,7 +50,7 @@ class SubstanceRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
 
-        if (is_array($row)) {
+        if (\is_array($row)) {
             /** @var Substance|null $hydrated */
             $hydrated = $this->createQueryBuilder('s')
                 ->leftJoin('s.symbols', 'sym')

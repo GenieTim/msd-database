@@ -30,11 +30,11 @@ class SymbolRepository extends ServiceEntityRepository
         if (!$symbol instanceof Symbol) {
             $symbol = new Symbol();
             $symbol->setName($cleanName);
-            if ($description !== null && $description !== '') {
+            if (null !== $description && '' !== $description) {
                 $symbol->setDescription($description);
             }
             $this->getEntityManager()->persist($symbol);
-        } elseif ($description !== null && $description !== '' && empty($symbol->getDescription())) {
+        } elseif (null !== $description && '' !== $description && empty($symbol->getDescription())) {
             $symbol->setDescription($description);
         }
 

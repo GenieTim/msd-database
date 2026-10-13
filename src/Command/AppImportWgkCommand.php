@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\Substance;
-use App\Repository\SubstanceRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -29,10 +28,10 @@ class AppImportWgkCommand extends Command
 
     public function __construct(
         private readonly EntityManagerInterface $em,
-        KernelInterface $kernel
+        KernelInterface $kernel,
     ) {
         parent::__construct();
-        $this->dataDir = rtrim($kernel->getProjectDir(), '/') . '/data/';
+        $this->dataDir = rtrim($kernel->getProjectDir(), '/').'/data/';
     }
 
     protected function configure(): void
@@ -45,17 +44,19 @@ class AppImportWgkCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $fileArg = (string) $input->getArgument('file');
-        $filePath = str_starts_with($fileArg, '/') ? $fileArg : $this->dataDir . $fileArg;
+        $filePath = str_starts_with($fileArg, '/') ? $fileArg : $this->dataDir.$fileArg;
 
         if (!file_exists($filePath)) {
-            $io->note(sprintf('WGK file not found at %s. You can place a UBA Rigoletto CSV export there.', $filePath));
+            $io->note(\sprintf('WGK file not found at %s. You can place a UBA Rigoletto CSV export there.', $filePath));
+
             return Command::SUCCESS;
         }
 
-        $io->writeln(sprintf('Importing WGK data from %s', $filePath));
+        $io->writeln(\sprintf('Importing WGK data from %s', $filePath));
         $handle = fopen($filePath, 'r');
         if (!$handle) {
             $io->error('Unable to open WGK CSV file.');
+
             return Command::FAILURE;
         }
 
@@ -64,8 +65,8 @@ class AppImportWgkCommand extends Command
         $rowCount = 0;
 
         while (($row = fgetcsv($handle, 1000, ';', escape: '\\')) !== false) {
-            $rowCount++;
-            if ($rowCount === 1) {
+            ++$rowCount;
+            if (1 === $rowCount) {
                 continue; // header
             }
 
@@ -78,11 +79,11 @@ class AppImportWgkCommand extends Command
                 if ($substance instanceof Substance && preg_match('/([1-3])/', $wgkStr, $matches)) {
                     $substance->setWgkGermany((int) $matches[1]);
                     $this->em->persist($substance);
-                    $updatedCount++;
+                    ++$updatedCount;
                 }
             }
 
-            if ($updatedCount > 0 && $updatedCount % 50 === 0) {
+            if ($updatedCount > 0 && 0 === $updatedCount % 50) {
                 $this->em->flush();
                 $this->em->clear();
             }
@@ -91,7 +92,8 @@ class AppImportWgkCommand extends Command
         fclose($handle);
         $this->em->flush();
 
-        $io->success(sprintf('Import complete: updated %d substances with WGK data.', $updatedCount));
+        $io->success(\sprintf('Import complete: updated %d substances with WGK data.', $updatedCount));
+
         return Command::SUCCESS;
     }
 }

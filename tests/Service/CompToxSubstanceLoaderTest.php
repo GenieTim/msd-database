@@ -37,7 +37,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'casrn' => '64-17-5',
                 'molFormula' => 'C2H6O',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -60,7 +60,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'casrn' => '67-64-1',
                 'molFormula' => 'C3H6O',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -83,7 +83,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'casrn' => '64-17-5',
                 'molFormula' => 'C2H6O',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -108,7 +108,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'preferredName' => 'Ethanol',
                 'casrn' => '64-17-5',
                 'molFormula' => 'C2H6O',
-            ], JSON_THROW_ON_ERROR)),
+            ], \JSON_THROW_ON_ERROR)),
         ];
 
         $httpClient = new MockHttpClient($responses);
@@ -132,7 +132,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'casrn' => '64-17-5',
                 'molFormula' => 'C2H6O',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -159,7 +159,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                     'casrn' => '64-17-5',
                     'molFormula' => 'C2H6O',
                 ],
-            ], JSON_THROW_ON_ERROR)),
+            ], \JSON_THROW_ON_ERROR)),
         ];
 
         $httpClient = new MockHttpClient($responses);
@@ -187,7 +187,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                     'casrn' => '64-17-5',
                     'molFormula' => 'C2H6O',
                 ],
-            ], JSON_THROW_ON_ERROR)),
+            ], \JSON_THROW_ON_ERROR)),
         ];
 
         $httpClient = new MockHttpClient($responses);
@@ -216,7 +216,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                     'casrn' => '64-17-5',
                     'molFormula' => 'C2H6O',
                 ],
-            ], JSON_THROW_ON_ERROR)),
+            ], \JSON_THROW_ON_ERROR)),
         ];
 
         $httpClient = new MockHttpClient($responses);
@@ -243,9 +243,9 @@ class CompToxSubstanceLoaderTest extends TestCase
     public function testLoadSubstanceReturnsNullOnEmptyApiResponse(): void
     {
         $responses = [
-            new MockResponse(json_encode([], JSON_THROW_ON_ERROR)),
-            new MockResponse(json_encode([], JSON_THROW_ON_ERROR)),
-            new MockResponse(json_encode([], JSON_THROW_ON_ERROR)),
+            new MockResponse(json_encode([], \JSON_THROW_ON_ERROR)),
+            new MockResponse(json_encode([], \JSON_THROW_ON_ERROR)),
+            new MockResponse(json_encode([], \JSON_THROW_ON_ERROR)),
         ];
 
         $httpClient = new MockHttpClient($responses);
@@ -294,7 +294,7 @@ class CompToxSubstanceLoaderTest extends TestCase
 
     public function testLoadSubstanceHandlesNetworkException(): void
     {
-        $httpClient = new MockHttpClient(function () {
+        $httpClient = new MockHttpClient(static function (): void {
             throw new TransportException('Connection timeout');
         });
 
@@ -327,7 +327,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'dtxsid' => 'DTXSID7020182',
                 'preferredName' => 'Ethanol',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -356,7 +356,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                 'casrn' => '64-17-5',
                 'molFormula' => 'C2H6O',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -381,7 +381,7 @@ class CompToxSubstanceLoaderTest extends TestCase
                     'mol_formula' => 'C2H6O',
                 ],
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
@@ -401,7 +401,7 @@ class CompToxSubstanceLoaderTest extends TestCase
             [
                 'unknown_field' => 'value',
             ],
-        ], JSON_THROW_ON_ERROR));
+        ], \JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
         $loader = new CompToxSubstanceLoader($httpClient, new NullLogger());
