@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="ghsRedFav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444" />
+      <stop offset="100%" stop-color="#DC2626" />
+    </linearGradient>
+    <linearGradient id="cyanCoreFav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+
+  <!-- GHS Diamond Frame -->
+  <rect x="96" y="96" width="320" height="320" rx="46" ry="46" 
+        transform="rotate(45 256 256)" 
+        fill="#FFFFFF" 
+        stroke="url(#ghsRedFav)" 
+        stroke-width="40" 
+        stroke-linejoin="round" />
+
+  <!-- Benzene Hexagon Bonds -->
+  <polygon points="256,174 327,215 327,297 256,338 185,297 185,215" 
+           fill="none" stroke="#0F172A" stroke-width="26" stroke-linejoin="round" />
+
+  <!-- Triad Spokes -->
+  <line x1="256" y1="174" x2="256" y2="256" stroke="#0F172A" stroke-width="22" stroke-linecap="round" />
+  <line x1="327" y1="297" x2="256" y2="256" stroke="#0F172A" stroke-width="22" stroke-linecap="round" />
+  <line x1="185" y1="297" x2="256" y2="256" stroke="#0F172A" stroke-width="22" stroke-linecap="round" />
+
+  <!-- Central Data Nucleus with White Isolation Ring -->
+  <circle cx="256" cy="256" r="30" fill="url(#cyanCoreFav)" stroke="#FFFFFF" stroke-width="8" />
+
+  <!-- 6 Vertex Atom Spheres -->
+  <circle cx="256" cy="174" r="24" fill="#0F172A" stroke="#FFFFFF" stroke-width="5" />
+  <circle cx="327" cy="215" r="22" fill="#0F172A" stroke="#FFFFFF" stroke-width="5" />
+  <circle cx="327" cy="297" r="24" fill="#0F172A" stroke="#FFFFFF" stroke-width="5" />
+  <circle cx="256" cy="338" r="22" fill="#0F172A" stroke="#FFFFFF" stroke-width="5" />
+  <circle cx="185" cy="297" r="24" fill="#0F172A" stroke="#FFFFFF" stroke-width="5" />
+  <circle cx="185" cy="215" r="22" fill="#0F172A" stroke="#FFFFFF" stroke-width="5" />
+</svg>

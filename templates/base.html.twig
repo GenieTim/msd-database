@@ -4,6 +4,12 @@
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>{% block title %}Welcome{% endblock %} – Molecule Safety Database</title>
+		<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+		<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+		<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+		<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+		<link rel="manifest" href="{{ asset('site.webmanifest') }}">
+		<meta name="theme-color" content="#0F172A">
 		{% block stylesheets %}
 			{{ encore_entry_link_tags('app') }}
 			{{ encore_entry_link_tags('css/global') }}
@@ -15,7 +21,7 @@
 		<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
 			<div class="container">
 				<a class="navbar-brand fw-semibold d-flex align-items-center" href="{{ path('index') }}">
-					<span class="badge bg-danger me-2">GHS</span>
+					<img src="{{ asset('logo-mark.svg') }}" alt="Molecule Safety Database" width="32" height="32" class="me-2 d-inline-block align-text-top">
 					<span>Molecule Safety Database</span>
 				</a>
 				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
