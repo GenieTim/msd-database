@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
+/*
+ * (c) Tim Bernhard
+ */
+
 namespace App\Repository;
 
 use App\Entity\Symbol;
+use App\Util\StringCleaner;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -18,32 +23,21 @@ class SymbolRepository extends ServiceEntityRepository
         parent::__construct($registry, Symbol::class);
     }
 
-    //    /**
-    //     * @return Symbol[] Returns an array of Symbol objects
-    //     */
-    /*
-    public function findByExampleField($value)
+    public function findOrCreate(string $name, ?string $description = null): Symbol
     {
-        return $this->createQueryBuilder('s')
-            ->andWhere('s.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('s.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $cleanName = StringCleaner::clean($name);
+        $symbol = $this->findOneBy(['name' => $cleanName]);
+        if (!$symbol instanceof Symbol) {
+            $symbol = new Symbol();
+            $symbol->setName($cleanName);
+            if ($description !== null && $description !== '') {
+                $symbol->setDescription($description);
+            }
+            $this->getEntityManager()->persist($symbol);
+        } elseif ($description !== null && $description !== '' && empty($symbol->getDescription())) {
+            $symbol->setDescription($description);
+        }
 
-    /*
-    public function findOneBySomeField($value): ?Symbol
-    {
-        return $this->createQueryBuilder('s')
-            ->andWhere('s.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $symbol;
     }
-    */
 }

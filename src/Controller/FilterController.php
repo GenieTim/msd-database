@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class FilterController extends AbstractController
 {
-    #[Route('/filter', name: 'filter')]
+    #[Route('/filter', name: 'filter', methods: ['GET'])]
     public function index(
         Request $request,
         SubstanceLoaderInterface $substanceLoader,
@@ -24,7 +24,8 @@ class FilterController extends AbstractController
         $form->handleRequest($request);
 
         $data = null;
-        if ($form->isSubmitted() && $form->isValid()) {
+        $searched = $form->isSubmitted() && $form->isValid();
+        if ($searched) {
             try {
                 $searchTerm = (string) $form->get('search')->getData();
                 $data = $substanceLoader->loadSubstance($searchTerm);
@@ -36,6 +37,7 @@ class FilterController extends AbstractController
         return $this->render('filter/index.html.twig', [
             'substance' => $data,
             'form' => $form->createView(),
+            'searched' => $searched,
         ]);
     }
 }

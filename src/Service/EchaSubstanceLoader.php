@@ -31,7 +31,6 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
     private const string EC_REGEX = '/^\d{3}-\d{3}-\d$/';
 
     public function __construct(
-        private readonly EntityManagerInterface $em,
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
@@ -331,10 +330,9 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
         $symbolCodes = array_values(array_unique($symbolCodes));
         foreach ($symbolCodes as $code) {
             $sym = $this->symbolRepo->findOneBy(['name' => $code]);
-            if (!$sym instanceof \App\Entity\Symbol) {
+            if (!$sym instanceof Symbol) {
                 $sym = new Symbol();
                 $sym->setName($code);
-                $this->em->persist($sym);
             }
             $symbolEntities[] = $sym;
         }
@@ -398,14 +396,13 @@ class EchaSubstanceLoader implements SubstanceLoaderInterface
 
         foreach ($statementsMap as $code => $data) {
             $stmt = $this->statementRepo->findOneBy(['name' => $code]);
-            if (!$stmt instanceof \App\Entity\Statement) {
+            if (!$stmt instanceof Statement) {
                 $stmt = new Statement();
                 $stmt->setName($code);
                 $stmt->setType($data['type']);
                 if ($data['desc'] !== null) {
                     $stmt->setDescription($data['desc']);
                 }
-                $this->em->persist($stmt);
             } elseif ($data['desc'] !== null && ($stmt->getDescription() === null || $stmt->getDescription() === '')) {
                 $stmt->setDescription($data['desc']);
             }

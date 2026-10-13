@@ -1,47 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<title>
-			{% block title %}Welcome!
-			{% endblock %}
-			– SDS Database</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>{% block title %}Welcome{% endblock %} – Molecule Safety Database</title>
 		{% block stylesheets %}
 			{{ encore_entry_link_tags('app') }}
-			<link rel="stylesheet" href="{{ asset('build/css/global.css') }}">
+			{{ encore_entry_link_tags('css/global') }}
 		{% endblock %}
 		{% block meta %}{% endblock %}
 	</head>
-	<body>
-		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-			<a class="navbar-brand" href="{{ path('index') }}">Molecule Safety Database</a>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
+	{% set current_route = app.request ? app.request.attributes.get('_route') : '' %}
+	<body class="d-flex flex-column min-vh-100 bg-body-tertiary text-body">
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+			<div class="container">
+				<a class="navbar-brand fw-semibold d-flex align-items-center" href="{{ path('index') }}">
+					<span class="badge bg-danger me-2">GHS</span>
+					<span>Molecule Safety Database</span>
+				</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
 
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav mr-auto">
-					<li class="nav-item active">
-						<a class="nav-link" href="{{ path('home') }}">Home</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="{{ path('filter') }}">Filter</a>
-					</li>
-				</ul>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+						<li class="nav-item">
+							<a class="nav-link {{ current_route in ['home', 'index'] ? 'active fw-medium' : '' }}" {% if current_route in ['home', 'index'] %}aria-current="page"{% endif %} href="{{ path('home') }}">Overview</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link {{ current_route == 'filter' ? 'active fw-medium' : '' }}" {% if current_route == 'filter' %}aria-current="page"{% endif %} href="{{ path('filter') }}">Substance Search</a>
+						</li>
+					</ul>
+					<div class="d-flex align-items-center gap-2">
+						<a class="btn btn-outline-light btn-sm" href="{{ path('api_doc') }}" target="_blank" rel="noopener">
+							OpenAPI Docs
+						</a>
+					</div>
+				</div>
 			</div>
 		</nav>
-		<div class="container mt-2"> {% block content %}{% endblock %}
+
+		<main class="flex-grow-1 py-4">
+			<div class="container">
+				{% block content %}{% endblock %}
 			</div>
-			<div class="container-fluid mt-5 bg-light ">
-				<footer class="footer py-3 px-3">
-					<div class="mx-auto text-muted">
-						<p>Copyright © Tim Bernhard,
-							{{"now"|date("Y")}}. All rights reserved. This webservice is provided “AS IS” and without warranty of any kind, either express or implied.</p>
-					</div>
-				</footer>
+		</main>
+
+		<footer class="footer mt-auto py-3 bg-white border-top">
+			<div class="container d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 small text-body-secondary">
+				<div>
+					<strong class="text-body">Molecule Safety Database</strong> · Copyright © Tim Bernhard, {{ "now"|date("Y") }}. All rights reserved.
+				</div>
+				<div>
+					Provided “AS IS” without warranty of any kind. Always verify against official manufacturer SDS documentation.
+				</div>
 			</div>
-			{% block javascripts %}
-				{{ encore_entry_script_tags('app') }}
-			{% endblock %}
-		</body>
-	</html>
+		</footer>
+
+		{% block javascripts %}
+			{{ encore_entry_script_tags('app') }}
+		{% endblock %}
+	</body>
+</html>

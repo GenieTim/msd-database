@@ -49,13 +49,6 @@ class GhsLabelGenerator
         string $firm = 'Lab Supply - Chemical Inventory',
         string $contact = 'Emergency Tel: 145'
     ): string {
-        $templatePath = $this->projectDir . '/GHS-labels/template-A4.tex';
-        if (file_exists($templatePath)) {
-            $template = (string) file_get_contents($templatePath);
-        } else {
-            $template = $this->getDefaultTemplate();
-        }
-
         // 1. Substance Name
         $name = $substance->getName() ?? 'Unknown Chemical';
         $chemNameTex = '\huge ' . $this->escapeLatex($name);
@@ -184,7 +177,7 @@ LATEX;
     {
         $tex = $this->generateTex($substance);
         $tempDir = sys_get_temp_dir() . '/ghs_label_' . uniqid('', true);
-        mkdir($tempDir, 0777, true);
+        mkdir($tempDir, 0700, true);
 
         try {
             $texFile = $tempDir . '/label.tex';
@@ -193,13 +186,17 @@ LATEX;
             // Copy figures directory into temp dir so pdflatex can resolve \includegraphics{figures/...}
             $figuresDir = $this->projectDir . '/GHS-labels/figures';
             if (is_dir($figuresDir)) {
-                mkdir($tempDir . '/figures', 0777, true);
+                mkdir($tempDir . '/figures', 0700, true);
                 foreach (glob($figuresDir . '/*.pdf') ?: [] as $fig) {
                     copy($fig, $tempDir . '/figures/' . basename($fig));
                 }
             }
 
-            $process = new Process(['pdflatex', '-interaction=nonstopmode', 'label.tex'], $tempDir);
+            $process = new Process(
+                ['pdflatex', '-no-shell-escape', '-interaction=nonstopmode', 'label.tex'],
+                $tempDir,
+                ['TEXINPUTS' => sprintf('.//:%s//:', $this->projectDir . '/GHS-labels')]
+            );
             $process->setTimeout(15);
             $process->run();
 
@@ -253,10 +250,5 @@ LATEX;
             }
         }
         @rmdir($dir);
-    }
-
-    private function getDefaultTemplate(): string
-    {
-        return '\documentclass[a4paper]{article}\begin{document}Label\end{document}';
     }
 }

@@ -75,7 +75,7 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * @return array<string>
      */
     protected function loadSearchResults(string $search): array {
-        $url = "https://www.sigmaaldrich.com/catalog/search?interface=All&N=0+&mode=partialmax&term=$search&lang=de&region=CH&focus=buildingblocks";
+        $url = sprintf('https://www.sigmaaldrich.com/catalog/search?interface=All&N=0+&mode=partialmax&term=%s&lang=de&region=CH&focus=buildingblocks', rawurlencode($search));
         $content = $this->curl($url);
         if ($content === false || $content === '') {
             return [];
@@ -218,32 +218,28 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
      * Get the symbol for a specified identifier
      */
     protected function getSymbol(string $search): ?Symbol {
-        $symbol = $this->symbolRepo->findOneBy(['name' => $search]);
-        if (!$symbol && $search !== '') {
-            $symbol = new Symbol();
-            $symbol->setName($search);
-            $this->em->persist($symbol);
+        if ($search === '') {
+            return null;
         }
-        return $symbol;
+
+        return $this->symbolRepo->findOrCreate($search);
     }
 
     /**
      * Get the statement for an identifier. If there is none yet, create a new Statement.
      */
     protected function getStatement(string $search): ?Statement {
-        $statement = $this->statementRepo->findOneBy(['name' => $search]);
-        if (!$statement && $search !== '') {
-            $statement = new Statement();
-            $statement->setName($search);
-            match (strtolower(substr($search, 0, 1))) {
-                'p' => $statement->setType(Statement::TYPE_P),
-                'h' => $statement->setType(Statement::TYPE_H),
-                default => $statement->setType(Statement::TYPE_UNKNOWN),
-            };
-
-            $this->em->persist($statement);
+        if ($search === '') {
+            return null;
         }
-        return $statement;
+
+        $type = match (strtolower(substr($search, 0, 1))) {
+            'p' => Statement::TYPE_P,
+            'h' => Statement::TYPE_H,
+            default => Statement::TYPE_UNKNOWN,
+        };
+
+        return $this->statementRepo->findOrCreate($search, null, $type);
     }
 
     /**
@@ -262,6 +258,10 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
     }
 
     protected function curl(string $url): string|false {
+        if ($url === '') {
+            return false;
+        }
+
         $this->logger->info("Curling $url");
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -271,8 +271,9 @@ class SigmaAldrichSubstanceLoader implements SubstanceLoaderInterface {
         curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36');
         curl_setopt($ch, CURLOPT_ENCODING, '');
         curl_setopt($ch, CURLOPT_HTTPHEADER, [$this->COOKIE]);
-        $return = curl_exec($ch);
-        if ($return === false || trim((string) $return) === '') {
+        $result = curl_exec($ch);
+        $return = is_string($result) ? $result : false;
+        if ($return === false || trim($return) === '') {
             $this->logger->alert("cURL failed", [curl_error($ch), curl_errno($ch), $return, error_get_last()]);
             $return = $this->getContents($url);
         }

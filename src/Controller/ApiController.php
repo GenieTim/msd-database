@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Substance;
 use App\Service\SubstanceLoaderInterface;
+use JMS\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,11 +15,12 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ApiController extends AbstractController
 {
-    #[Route('/api/{format}/substance', name: 'api_substance')]
+    #[Route('/api/{format}/substance', name: 'api_substance', requirements: ['format' => 'json|xml'], methods: ['GET'])]
     public function getSubstanceAction(
         Request $request,
         string $format,
         SubstanceLoaderInterface $substanceLoader,
+        SerializerInterface $serializer,
         ?string $search = null
     ): Response {
         $searchTerm = $search
@@ -36,10 +38,18 @@ class ApiController extends AbstractController
             throw $this->createNotFoundException('no substance found for ' . $searchTerm);
         }
 
-        return $this->render('api/substance.twig', [
-            'format' => $format,
-            'data' => $data,
+        $content = $serializer->serialize($data, $format);
+        $contentType = $format === 'xml' ? 'application/xml' : 'application/json';
+
+        $response = new Response($content, Response::HTTP_OK, [
+            'Content-Type' => $contentType . '; charset=UTF-8',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
+        $response->setPublic();
+        $response->setMaxAge(3600);
+        $response->setEtag(md5($content));
+
+        return $response;
     }
 
     #[Route('/api/spec.json', name: 'api_openapi_spec', methods: ['GET'])]
@@ -93,7 +103,14 @@ class ApiController extends AbstractController
             ],
         ];
 
-        return new JsonResponse($spec);
+        $response = new JsonResponse($spec);
+        $response->setPublic();
+        $response->setMaxAge(86400);
+        $response->setSharedMaxAge(604800);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->setEtag(md5((string) json_encode($spec)));
+
+        return $response;
     }
 
     #[Route('/api/doc', name: 'api_doc', methods: ['GET'])]
@@ -122,6 +139,13 @@ class ApiController extends AbstractController
 </html>
 HTML;
 
-        return new Response($html);
+        $response = new Response($html, Response::HTTP_OK, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+        $response->setPublic();
+        $response->setMaxAge(86400);
+
+        return $response;
     }
 }

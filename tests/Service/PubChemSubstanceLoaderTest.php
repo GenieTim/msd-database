@@ -45,10 +45,10 @@ class PubChemSubstanceLoaderTest extends TestCase
         // 3) Synonyms lookup for CID 702
         // 4) GHS classification lookup for CID 702
         $responses = [
-            new MockResponse(json_encode([
+            new MockResponse((string) json_encode([
                 'IdentifierList' => ['CID' => [702]],
             ])),
-            new MockResponse(json_encode([
+            new MockResponse((string) json_encode([
                 'PropertyTable' => [
                     'Properties' => [[
                         'CID' => 702,
@@ -62,7 +62,7 @@ class PubChemSubstanceLoaderTest extends TestCase
                     ]],
                 ],
             ])),
-            new MockResponse(json_encode([
+            new MockResponse((string) json_encode([
                 'InformationList' => [
                     'Information' => [[
                         'CID' => 702,
@@ -70,7 +70,7 @@ class PubChemSubstanceLoaderTest extends TestCase
                     ]],
                 ],
             ])),
-            new MockResponse(json_encode([
+            new MockResponse((string) json_encode([
                 'Record' => [
                     'RecordNumber' => 702,
                     'Section' => [
@@ -117,7 +117,7 @@ class PubChemSubstanceLoaderTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $loader = new PubChemSubstanceLoader($em, $substanceRepo, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new PubChemSubstanceLoader($substanceRepo, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('64-17-5');
 

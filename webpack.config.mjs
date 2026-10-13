@@ -7,8 +7,8 @@ Encore
     .setPublicPath('/build')
     .cleanupOutputBeforeBuild()
     .enableSourceMaps(!Encore.isProduction())
-    // uncomment to create hashed filenames (e.g. app.abc123.css)
-    // .enableVersioning(Encore.isProduction())
+    // creates hashed filenames in production (e.g. app.abc123.css)
+    .enableVersioning(Encore.isProduction())
 
     // uncomment to define the assets of the project
     .addEntry('app', './assets/js/global.js')

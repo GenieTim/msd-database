@@ -60,7 +60,6 @@ class GestisSubstanceLoaderTest extends TestCase
         $em = $this->createStub(EntityManagerInterface::class);
 
         $loader = new GestisSubstanceLoader(
-            $em,
             $statementRepo,
             $symbolRepo,
             $httpClient,
@@ -85,10 +84,8 @@ class GestisSubstanceLoaderTest extends TestCase
 
         $symbolRepo = $this->createStub(SymbolRepository::class);
         $statementRepo = $this->createStub(StatementRepository::class);
-        $em = $this->createStub(EntityManagerInterface::class);
 
         $loader = new GestisSubstanceLoader(
-            $em,
             $statementRepo,
             $symbolRepo,
             $httpClient,

@@ -19,7 +19,7 @@ $env = $_SERVER['APP_ENV'] ?? $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?: 'prod';
 $debug = (bool) ($_SERVER['APP_DEBUG'] ?? $_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: ('prod' !== $env));
 
 if ($debug) {
-    umask(0000);
+    umask(0022);
 
     Debug::enable();
 }

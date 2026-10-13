@@ -60,7 +60,7 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev && \
 # Prepare var directory with permissions
 RUN mkdir -p var/cache var/log var/data && \
     chown -R root:www-data var && \
-    chmod -R 777 var
+    chmod -R 775 var
 
 # Copy entrypoint script
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint

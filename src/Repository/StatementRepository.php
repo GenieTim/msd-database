@@ -1,8 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * (c) Tim Bernhard
+ */
+
 namespace App\Repository;
 
 use App\Entity\Statement;
+use App\Util\StringCleaner;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -40,32 +47,22 @@ class StatementRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    //    /**
-    //     * @return Statement[] Returns an array of Statement objects
-    //     */
-    /*
-    public function findByExampleField($value)
+    public function findOrCreate(string $name, ?string $description = null, int $type = Statement::TYPE_UNKNOWN): Statement
     {
-        return $this->createQueryBuilder('s')
-            ->andWhere('s.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('s.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $cleanName = StringCleaner::clean($name);
+        $statement = $this->findOneBy(['name' => $cleanName]);
+        if (!$statement instanceof Statement) {
+            $statement = new Statement();
+            $statement->setName($cleanName);
+            $statement->setType($type);
+            if ($description !== null && $description !== '') {
+                $statement->setDescription($description);
+            }
+            $this->getEntityManager()->persist($statement);
+        } elseif ($description !== null && $description !== '' && empty($statement->getDescription())) {
+            $statement->setDescription($description);
+        }
 
-    /*
-    public function findOneBySomeField($value): ?Statement
-    {
-        return $this->createQueryBuilder('s')
-            ->andWhere('s.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        return $statement;
     }
-    */
 }

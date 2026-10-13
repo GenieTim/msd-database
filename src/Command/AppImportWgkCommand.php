@@ -84,6 +84,7 @@ class AppImportWgkCommand extends Command
 
             if ($updatedCount > 0 && $updatedCount % 50 === 0) {
                 $this->em->flush();
+                $this->em->clear();
             }
         }
 

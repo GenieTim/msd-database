@@ -32,7 +32,7 @@ class EchaSubstanceLoaderTest extends TestCase
         $symbolRepo = $this->createMock(SymbolRepository::class);
         $httpClient = new MockHttpClient();
 
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $this->assertTrue($loader->supports('64-17-5'));
         $this->assertTrue($loader->supports('200-578-6'));
@@ -81,7 +81,7 @@ class EchaSubstanceLoaderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('64-17-5');
 
@@ -129,7 +129,7 @@ class EchaSubstanceLoaderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('200-662-2');
 
@@ -188,7 +188,7 @@ class EchaSubstanceLoaderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('Sodium hydroxide');
 
@@ -239,7 +239,7 @@ class EchaSubstanceLoaderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$searchResponse, $detailResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('Ethanol');
 
@@ -290,7 +290,7 @@ class EchaSubstanceLoaderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('67-56-1');
 
@@ -335,7 +335,7 @@ class EchaSubstanceLoaderTest extends TestCase
         ], JSON_THROW_ON_ERROR));
 
         $httpClient = new MockHttpClient([$response]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('123-45-6');
 
@@ -355,7 +355,7 @@ class EchaSubstanceLoaderTest extends TestCase
 
         $searchResponse = new MockResponse(json_encode(['results' => []], JSON_THROW_ON_ERROR));
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('nonexistent_chemical_xyz');
         $this->assertNull($substance);
@@ -369,7 +369,7 @@ class EchaSubstanceLoaderTest extends TestCase
 
         $searchResponse = new MockResponse('Not Found', ['http_code' => 404]);
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('64-17-5');
         $this->assertNull($substance);
@@ -383,7 +383,7 @@ class EchaSubstanceLoaderTest extends TestCase
 
         $searchResponse = new MockResponse('Internal Server Error', ['http_code' => 500]);
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('64-17-5');
         $this->assertNull($substance);
@@ -399,7 +399,7 @@ class EchaSubstanceLoaderTest extends TestCase
             'error' => new TransportException('Connection timeout to ECHA API'),
         ]);
         $httpClient = new MockHttpClient([$searchResponse]);
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('64-17-5');
         $this->assertNull($substance);
@@ -412,7 +412,7 @@ class EchaSubstanceLoaderTest extends TestCase
         $symbolRepo = $this->createMock(SymbolRepository::class);
         $httpClient = new MockHttpClient();
 
-        $loader = new EchaSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new EchaSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('   ');
         $this->assertNull($substance);

@@ -71,21 +71,17 @@ class AppImportDataCommand extends Command
 
         foreach ($statements as $key => $statement) {
             $key = (string) $key;
-            $old_statement = $statementRepo->findOneBy(['name' => $key]);
-            if (!$old_statement && $key !== '') {
-                $new_statement = new Statement();
-                $new_statement->setName($key);
-                $new_statement->setDescription((string) $statement);
-                match (strtolower(substr($key, 0, 1))) {
-                    'p' => $new_statement->setType(Statement::TYPE_P),
-                    'h' => $new_statement->setType(Statement::TYPE_H),
-                    default => $new_statement->setType(Statement::TYPE_UNKNOWN),
-                };
-
-                $this->em->persist($new_statement);
-            } elseif ($old_statement && $old_statement->getDescription() !== $statement) {
-                $old_statement->setDescription((string) $statement);
-                $this->em->persist($old_statement);
+            if ($key === '') {
+                continue;
+            }
+            $type = match (strtolower(substr($key, 0, 1))) {
+                'p' => Statement::TYPE_P,
+                'h' => Statement::TYPE_H,
+                default => Statement::TYPE_UNKNOWN,
+            };
+            $stmt = $statementRepo->findOrCreate($key, (string) $statement, $type);
+            if ($stmt->getDescription() !== (string) $statement) {
+                $stmt->setDescription((string) $statement);
             }
         }
 

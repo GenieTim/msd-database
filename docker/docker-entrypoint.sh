@@ -5,13 +5,13 @@ set -e
 mkdir -p var/cache var/log var/data
 
 # Fix permissions for the runtime directories
-chmod -R 777 var/cache var/log var/data
+chmod -R 775 var/cache var/log var/data 2>/dev/null || true
 
 # Migrate legacy sqlite database file if found at var/data.db
 if [ -f var/data.db ] && [ ! -f var/data/data.db ]; then
     echo ">> Migrating legacy var/data.db to persistent volume var/data/data.db..."
     cp var/data.db var/data/data.db
-    chmod 666 var/data/data.db
+    chmod 664 var/data/data.db
 fi
 
 # If running frankenphp or console commands, run database initialization
@@ -41,7 +41,7 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
     php bin/console app:import-data --no-interaction || true
 
     # Fix permissions on runtime files
-    chmod -R 777 var/cache var/log var/data 2>/dev/null || true
+    chmod -R 775 var/cache var/log var/data 2>/dev/null || true
 
     echo ">> Application initialized successfully."
 fi

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Service\SigmaAldrichSubstanceLoader;
+use App\Util\StringCleaner;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\SymbolRepository::class)]
+#[ORM\Table(name: 'symbol')]
+#[ORM\UniqueConstraint(name: 'symbol_name_unique', columns: ['name'])]
 class Symbol
 {
     #[ORM\Id]
@@ -15,7 +17,7 @@ class Symbol
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::INTEGER)]
     private ?int $id = null;
 
-    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 255)]
+    #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 64, unique: true)]
     private ?string $name = null;
 
     #[ORM\Column(type: \Doctrine\DBAL\Types\Types::STRING, length: 1024, nullable: true)]
@@ -33,7 +35,7 @@ class Symbol
 
     public function setName(string $name): self
     {
-        $this->name = trim($name, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+        $this->name = StringCleaner::clean($name);
 
         return $this;
     }

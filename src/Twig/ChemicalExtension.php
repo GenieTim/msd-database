@@ -286,6 +286,48 @@ class ChemicalExtension
         return 'badge bg-secondary';
     }
 
+    /**
+     * Formats a molecular formula string with HTML <sub> tags for stoichiometric numbers.
+     */
+    #[\Twig\Attribute\AsTwigFilter(name: 'format_formula', isSafe: ['html'])]
+    #[\Twig\Attribute\AsTwigFunction(name: 'format_formula', isSafe: ['html'])]
+    public function formatChemicalFormula(?string $formula): string
+    {
+        if ($formula === null || trim($formula) === '') {
+            return '';
+        }
+
+        $escaped = htmlspecialchars(trim($formula), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return (string) preg_replace('/(?<=[A-Za-z\)\]])(\d+)/', '<sub>$1</sub>', $escaped);
+    }
+
+    /**
+     * Pretty-prints a JSON string and optionally summarizes lengthy arrays for UI previews.
+     */
+    #[\Twig\Attribute\AsTwigFilter(name: 'pretty_json')]
+    public function formatPrettyJson(string $json, int $maxArrayItems = 4): string
+    {
+        $decoded = json_decode($json, true);
+        if (!is_array($decoded)) {
+            return $json;
+        }
+
+        if ($maxArrayItems > 0) {
+            foreach (['statements', 'synonyms', 'symbols'] as $key) {
+                if (isset($decoded[$key]) && is_array($decoded[$key]) && count($decoded[$key]) > $maxArrayItems) {
+                    $total = count($decoded[$key]);
+                    $decoded[$key] = array_slice($decoded[$key], 0, $maxArrayItems);
+                    $decoded[$key][] = sprintf('... (%d more items)', $total - $maxArrayItems);
+                }
+            }
+        }
+
+        $pretty = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        return is_string($pretty) ? $pretty : $json;
+    }
+
     private function normalizeSizeString(int|string $size): string
     {
         if (is_int($size)) {

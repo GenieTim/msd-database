@@ -1,35 +1,225 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Welcome!{% endblock %}
+{% block title %}Overview{% endblock %}
 
 {% block meta %}
     {{ parent() }}
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 {% endblock %}
 
 {% block content %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4 p-lg-5">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <div class="d-inline-flex align-items-center gap-2 mb-3">
+                        <span class="badge bg-danger text-white">GHS / CLP Compliant</span>
+                        <span class="badge bg-secondary text-white">8 Federated Sources</span>
+                    </div>
+                    <h1 class="display-6 fw-bold mb-3">Chemical Safety &amp; GHS Hazard Database</h1>
+                    <p class="lead text-body-secondary mb-4">
+                        Look up consolidated Safety Data Sheet (SDS) hazard classifications, H/P statements, physical constants, and printable laboratory labels by chemical name, CAS number, or molecular formula.
+                    </p>
 
-    <div class="jumbotron jumbotron-fluid">
-        <div class="container">
-            <h1 class="display-4">Hello World!</h1>
-            <p class="lead">
-                This application is your access to all SDS data available.
-            </p>
-            <p>The data is sourced from <a href="https://pubchem.ncbi.nlm.nih.gov/">PubChem</a>, <a href="https://wikidata.org">WikiData</a>, <a href="https://echa.europa.eu/">ECHA (REACH / CLP)</a>, <a href="https://www.ebi.ac.uk/chebi/">ChEBI</a>, <a href="https://comptox.epa.gov/dashboard/">EPA CompTox</a>, <a href="https://webbook.nist.gov/">NIST Chemistry WebBook</a>, <a href="https://gestis.dguv.de/">GESTIS</a>, and <a href="https://www.sigmaaldrich.com">Sigma-Aldrich</a>.</p>
-            <p class="lead">
-                <a class="btn btn-primary btn-lg" href="{{ path('filter') }}">Find data</a>
-            </p>
+                    <form action="{{ path('filter') }}" method="get" class="mb-3">
+                        <div class="input-group input-group-lg shadow-sm">
+                            <input
+                                type="text"
+                                name="simple_search[search]"
+                                class="form-control"
+                                placeholder="Search by chemical name, CAS, or formula..."
+                                aria-label="Search chemical substance"
+                                required
+                            >
+                            <button class="btn btn-primary px-4 fw-semibold" type="submit">
+                                Search Substance
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2 small">
+                        <span class="text-body-secondary fw-medium">Quick examples:</span>
+                        <a href="{{ path('filter', {'simple_search': {'search': 'HNO3'}}) }}" class="badge rounded-pill bg-light text-dark border text-decoration-none px-3 py-2">
+                            Nitric Acid (HNO<sub>3</sub>)
+                        </a>
+                        <a href="{{ path('filter', {'simple_search': {'search': '7697-37-2'}}) }}" class="badge rounded-pill bg-light text-dark border text-decoration-none px-3 py-2">
+                            CAS 7697-37-2
+                        </a>
+                        <a href="{{ path('filter', {'simple_search': {'search': '944'}}) }}" class="badge rounded-pill bg-light text-dark border text-decoration-none px-3 py-2">
+                            PubChem CID 944
+                        </a>
+                        <a href="{{ path('filter') }}" class="ms-auto link-primary text-decoration-none fw-medium">
+                            Substance Search →
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="bg-dark text-light rounded-3 p-4 h-100">
+                        <h2 class="h6 text-uppercase text-white-50 fw-bold mb-3">Platform Capabilities</h2>
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="badge bg-danger text-white py-2 text-center flex-shrink-0 mt-1" style="width: 3.25rem;">GHS</span>
+                                <div>
+                                    <div class="fw-semibold">Standardized Hazard Profiles</div>
+                                    <div class="small text-white-50">Signal words, GHS01–GHS09 pictograms, Hazard (H) and Precautionary (P) statements, plus German WGK classes.</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="badge bg-primary text-white py-2 text-center flex-shrink-0 mt-1" style="width: 3.25rem;">PDF</span>
+                                <div>
+                                    <div class="fw-semibold">Instant Container Label Generation</div>
+                                    <div class="small text-white-50">Export print-ready PDF safety labels or customizable LaTeX (<code>.tex</code>) templates for laboratory bottles.</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="badge bg-success text-white py-2 text-center flex-shrink-0 mt-1" style="width: 3.25rem;">API</span>
+                                <div>
+                                    <div class="fw-semibold">RESTful JSON &amp; XML Endpoints</div>
+                                    <div class="small text-white-50">Integrate live chemical safety lookups directly into electronic lab notebooks (ELN) and inventory systems.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="container">
-        <h1>API</h1>
-        <p>
-            Want to load SDS data from an application? Just make a request to 
-            <code>{{ absolute_url(path("api_substance", { 'format' : 'json'  })) }}</code>
-            with a parameter called "search". Place whatever search term you want in there to fetch a substance. 
-            The result will look like this, for example:
-            <pre class="prettyprint"><code class="lang-js lang-json">{{ render(controller('App\\Controller\\ApiController::getSubstanceAction', { 'format' : 'json', 'search' : 'HNO3'})) }}</code></pre>
-        </p>
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h5 fw-bold mb-0">Federated Chemical Data Sources</h2>
+            <span class="small text-body-secondary">Automated multi-source enrichment &amp; local database caching</span>
+        </div>
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            <div class="col">
+                <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">PubChem</div>
+                        <div class="small text-body-secondary">NIH / NCBI PUG REST structures, CIDs &amp; GHS classifications</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://echa.europa.eu/" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">ECHA (REACH / CLP)</div>
+                        <div class="small text-body-secondary">European Chemicals Agency C&amp;L Inventory hazard records</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://gestis.dguv.de/" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">GESTIS</div>
+                        <div class="small text-body-secondary">IFA hazardous substance database &amp; WGK water hazard classes</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://webbook.nist.gov/" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">NIST Chemistry WebBook</div>
+                        <div class="small text-body-secondary">Thermochemical &amp; physical property reference data</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://www.ebi.ac.uk/chebi/" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">ChEBI</div>
+                        <div class="small text-body-secondary">EMBL-EBI Chemical Entities of Biological Interest</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://comptox.epa.gov/dashboard/" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">EPA CompTox</div>
+                        <div class="small text-body-secondary">US EPA Computational Toxicology Chemicals Dashboard</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://wikidata.org" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">Wikidata</div>
+                        <div class="small text-body-secondary">Open SPARQL chemical identifiers, CAS &amp; InChIKey mapping</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col">
+                <a href="https://www.sigmaaldrich.com" target="_blank" rel="noopener noreferrer" class="card h-100 border-0 shadow-sm text-decoration-none">
+                    <div class="card-body p-3">
+                        <div class="fw-semibold text-body mb-1">Sigma-Aldrich</div>
+                        <div class="small text-body-secondary">Commercial safety data sheet (SDS) hazard statements</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h5 fw-bold mb-0">REST API &amp; Developer Integration</h2>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border">JSON</span>
+                <span class="badge bg-light text-dark border">XML</span>
+                <a href="{{ path('api_doc') }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
+                    OpenAPI / Swagger UI
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4 align-items-stretch">
+                <div class="col-lg-5 d-flex flex-column justify-content-between">
+                    <div>
+                        <p class="text-body-secondary small mb-3">
+                            Query chemical safety records programmatically via a single HTTP <code>GET</code> request. Pass any chemical name, CAS registry number, or molecular formula in the <code>search</code> query parameter.
+                        </p>
+                        <div class="mb-3">
+                            <div class="small fw-semibold text-uppercase text-body-secondary mb-1">Endpoints</div>
+                            <div class="bg-body-tertiary border rounded p-2 font-monospace small text-break mb-2">
+                                <span class="badge bg-success text-white me-1">GET</span>{{ path('api_substance', { 'format': 'json' }) }}?search=HNO3
+                            </div>
+                            <div class="bg-body-tertiary border rounded p-2 font-monospace small text-break">
+                                <span class="badge bg-primary text-white me-1">GET</span>{{ path('api_substance', { 'format': 'xml' }) }}?search=7697-37-2
+                            </div>
+                        </div>
+                    </div>
+                    <table class="table table-sm table-bordered small mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Location</th>
+                                <th>Accepted Values</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-monospace fw-medium">format</td>
+                                <td><code>path</code></td>
+                                <td><code>json</code> or <code>xml</code></td>
+                            </tr>
+                            <tr>
+                                <td class="font-monospace fw-medium">search</td>
+                                <td><code>query</code></td>
+                                <td>Name, CAS, Formula, or CID</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-lg-7">
+                    <div class="bg-dark text-light rounded-3 overflow-hidden border border-secondary h-100">
+                        <div class="bg-black bg-opacity-50 px-3 py-2 border-bottom border-secondary d-flex justify-content-between align-items-center small">
+                            <span class="font-monospace text-white-50">GET /api/json/substance?search=HNO3</span>
+                            <span class="badge bg-success text-white">200 OK · application/json</span>
+                        </div>
+                        <pre class="mb-0 p-3 small text-light font-monospace" style="max-height: 230px; overflow-y: auto;"><code>{{ render(controller('App\\Controller\\ApiController::getSubstanceAction', { 'format' : 'json', 'search' : 'HNO3'}))|pretty_json(2) }}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

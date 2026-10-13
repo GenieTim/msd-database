@@ -26,7 +26,7 @@ class LabelController extends AbstractController
     ) {
     }
 
-    #[Route('/substance/{id}/label/tex', name: 'substance_label_tex', requirements: ['id' => '\d+'])]
+    #[Route('/substance/{id}/label/tex', name: 'substance_label_tex', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function downloadTexAction(int $id): Response
     {
         $substance = $this->substanceRepo->find($id);
@@ -34,17 +34,10 @@ class LabelController extends AbstractController
             throw $this->createNotFoundException('Substance not found');
         }
 
-        $tex = $this->labelGenerator->generateTex($substance);
-        $filename = sprintf('ghs-label-%s.tex', $this->sanitizeFilename($substance->getName() ?? 'substance'));
-
-        $response = new Response($tex);
-        $response->headers->set('Content-Type', 'text/x-tex; charset=utf-8');
-        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
-
-        return $response;
+        return $this->createTexResponse($substance);
     }
 
-    #[Route('/substance/{id}/label/pdf', name: 'substance_label_pdf', requirements: ['id' => '\d+'])]
+    #[Route('/substance/{id}/label/pdf', name: 'substance_label_pdf', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function downloadPdfAction(int $id): Response
     {
         $substance = $this->substanceRepo->find($id);
@@ -52,22 +45,10 @@ class LabelController extends AbstractController
             throw $this->createNotFoundException('Substance not found');
         }
 
-        $pdf = $this->labelGenerator->generatePdf($substance);
-        if ($pdf === null) {
-            // Fallback: if pdflatex isn't installed in environment, return LaTeX with helpful notice
-            return $this->downloadTexAction($id);
-        }
-
-        $filename = sprintf('ghs-label-%s.pdf', $this->sanitizeFilename($substance->getName() ?? 'substance'));
-
-        $response = new Response($pdf);
-        $response->headers->set('Content-Type', 'application/pdf');
-        $response->headers->set('Content-Disposition', sprintf('inline; filename="%s"', $filename));
-
-        return $response;
+        return $this->createPdfResponse($substance);
     }
 
-    #[Route('/substance/search/label/tex', name: 'substance_search_label_tex')]
+    #[Route('/substance/search/label/tex', name: 'substance_search_label_tex', methods: ['GET'])]
     public function searchTexAction(Request $request): Response
     {
         $search = (string) $request->query->get('search', '');
@@ -80,17 +61,10 @@ class LabelController extends AbstractController
             throw $this->createNotFoundException(sprintf('No substance found for "%s"', $search));
         }
 
-        $tex = $this->labelGenerator->generateTex($substance);
-        $filename = sprintf('ghs-label-%s.tex', $this->sanitizeFilename($substance->getName() ?? 'substance'));
-
-        $response = new Response($tex);
-        $response->headers->set('Content-Type', 'text/x-tex; charset=utf-8');
-        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
-
-        return $response;
+        return $this->createTexResponse($substance);
     }
 
-    #[Route('/substance/search/label/pdf', name: 'substance_search_label_pdf')]
+    #[Route('/substance/search/label/pdf', name: 'substance_search_label_pdf', methods: ['GET'])]
     public function searchPdfAction(Request $request): Response
     {
         $search = (string) $request->query->get('search', '');
@@ -103,16 +77,42 @@ class LabelController extends AbstractController
             throw $this->createNotFoundException(sprintf('No substance found for "%s"', $search));
         }
 
+        return $this->createPdfResponse($substance);
+    }
+
+    private function createTexResponse(Substance $substance): Response
+    {
+        $tex = $this->labelGenerator->generateTex($substance);
+        $filename = sprintf('ghs-label-%s.tex', $this->sanitizeFilename($substance->getName() ?? 'substance'));
+
+        $response = new Response($tex, Response::HTTP_OK, [
+            'Content-Type' => 'text/x-tex; charset=utf-8',
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+        $response->setPublic();
+        $response->setMaxAge(3600);
+
+        return $response;
+    }
+
+    private function createPdfResponse(Substance $substance): Response
+    {
         $pdf = $this->labelGenerator->generatePdf($substance);
         if ($pdf === null) {
-            return $this->searchTexAction($request);
+            // Fallback: if pdflatex isn't installed in environment, return LaTeX
+            return $this->createTexResponse($substance);
         }
 
         $filename = sprintf('ghs-label-%s.pdf', $this->sanitizeFilename($substance->getName() ?? 'substance'));
 
-        $response = new Response($pdf);
-        $response->headers->set('Content-Type', 'application/pdf');
-        $response->headers->set('Content-Disposition', sprintf('inline; filename="%s"', $filename));
+        $response = new Response($pdf, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('inline; filename="%s"', $filename),
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+        $response->setPublic();
+        $response->setMaxAge(3600);
 
         return $response;
     }

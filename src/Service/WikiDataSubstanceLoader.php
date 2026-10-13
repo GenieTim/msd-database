@@ -31,7 +31,6 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
     private const string LANGUAGE = 'en';
 
     public function __construct(
-        private readonly EntityManagerInterface $em,
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
@@ -241,13 +240,7 @@ class WikiDataSubstanceLoader implements SubstanceLoaderInterface
                 // Map known Wikidata items or extract code
                 $symbolName = $this->mapWikidataPictogram($picId);
                 if ($symbolName) {
-                    $symbol = $this->symbolRepo->findOneBy(['name' => $symbolName]);
-                    if (!$symbol instanceof \App\Entity\Symbol) {
-                        $symbol = new Symbol();
-                        $symbol->setName($symbolName);
-                        $this->em->persist($symbol);
-                    }
-                    $symbols[] = $symbol;
+                    $symbols[] = $this->symbolRepo->findOrCreate($symbolName);
                 }
             }
             if ($symbols !== []) {

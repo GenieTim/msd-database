@@ -2,6 +2,7 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     locale: 'en'
+    env(GESTIS_API_TOKEN): ''
 
 services:
     # default configuration for services in *this* file
@@ -64,6 +65,7 @@ services:
 
     # Chain Loader injecting all tagged loaders
     App\Service\ChainSubstanceLoader:
+        tags: []
         arguments:
             $loaders: !tagged_iterator app.substance_loader
 

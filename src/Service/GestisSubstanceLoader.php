@@ -17,6 +17,7 @@ use App\Repository\SymbolRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -27,14 +28,14 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class GestisSubstanceLoader implements SubstanceLoaderInterface
 {
     private const string API_BASE = 'https://gestis-api.dguv.de/api';
-    private const string API_TOKEN = 'dddiiasjhduuvnnasdkkwUUSHhjaPPKMasd';
 
     public function __construct(
-        private readonly EntityManagerInterface $em,
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        #[Autowire('%env(GESTIS_API_TOKEN)%')]
+        private readonly string $apiToken = ''
     ) {
     }
 
@@ -51,14 +52,18 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
         }
 
         try {
+            $headers = [
+                'Accept' => 'application/json',
+                'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
+            ];
+            if ($this->apiToken !== '') {
+                $headers['Authorization'] = 'Bearer ' . $this->apiToken;
+            }
+
             // 1. Search for substance by term or CAS
             $searchUrl = sprintf('%s/search/%s', self::API_BASE, rawurlencode($search));
             $searchResp = $this->httpClient->request('GET', $searchUrl, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . self::API_TOKEN,
-                    'Accept' => 'application/json',
-                    'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
-                ],
+                'headers' => $headers,
                 'timeout' => 8,
             ]);
 
@@ -117,11 +122,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             // 2. Fetch full substance article
             $articleUrl = sprintf('%s/article/en/%s', self::API_BASE, rawurlencode((string) $zvgNr));
             $articleResp = $this->httpClient->request('GET', $articleUrl, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . self::API_TOKEN,
-                    'Accept' => 'application/json',
-                    'User-Agent' => 'MsdDatabase/1.0 (https://genieblog.ch)',
-                ],
+                'headers' => $headers,
                 'timeout' => 8,
             ]);
 
@@ -165,13 +166,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
                 $symbolCodes = array_values(array_unique(array_map(strtoupper(...), $symMatches[0])));
                 $symbolEntities = [];
                 foreach ($symbolCodes as $code) {
-                    $sym = $this->symbolRepo->findOneBy(['name' => $code]);
-                    if (!$sym instanceof \App\Entity\Symbol) {
-                        $sym = new Symbol();
-                        $sym->setName($code);
-                        $this->em->persist($sym);
-                    }
-                    $symbolEntities[] = $sym;
+                    $symbolEntities[] = $this->symbolRepo->findOrCreate($code);
                 }
                 $substance->setSymbols($symbolEntities);
             }
@@ -181,14 +176,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             if (preg_match_all('/\b(H(2[0-9]{2}|3[0-9]{2}|4[0-9]{2})[A-Za-z\+]*(?:\+H[0-9]{3}[A-Za-z\+]*)*)/', $allText, $hMatches)) {
                 $hCodes = array_values(array_unique($hMatches[1]));
                 foreach ($hCodes as $hCode) {
-                    $stmt = $this->statementRepo->findOneBy(['name' => $hCode]);
-                    if (!$stmt instanceof \App\Entity\Statement) {
-                        $stmt = new Statement();
-                        $stmt->setName($hCode);
-                        $stmt->setType(Statement::TYPE_H);
-                        $this->em->persist($stmt);
-                    }
-                    $statementEntities[] = $stmt;
+                    $statementEntities[] = $this->statementRepo->findOrCreate($hCode, null, Statement::TYPE_H);
                 }
             }
 
@@ -196,14 +184,7 @@ class GestisSubstanceLoader implements SubstanceLoaderInterface
             if (preg_match_all('/\b(P([1-5][0-9]{2})(?:\+P[0-9]{3})*)/', $allText, $pMatches)) {
                 $pCodes = array_values(array_unique($pMatches[1]));
                 foreach ($pCodes as $pCode) {
-                    $stmt = $this->statementRepo->findOneBy(['name' => $pCode]);
-                    if (!$stmt instanceof \App\Entity\Statement) {
-                        $stmt = new Statement();
-                        $stmt->setName($pCode);
-                        $stmt->setType(Statement::TYPE_P);
-                        $this->em->persist($stmt);
-                    }
-                    $statementEntities[] = $stmt;
+                    $statementEntities[] = $this->statementRepo->findOrCreate($pCode, null, Statement::TYPE_P);
                 }
             }
 

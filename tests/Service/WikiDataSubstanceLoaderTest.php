@@ -48,12 +48,12 @@ class WikiDataSubstanceLoaderTest extends TestCase
         // Mock 1: Wikidata search for "acetone"
         // Mock 2: Entity data for Q4938
         $responses = [
-            new MockResponse(json_encode([
+            new MockResponse((string) json_encode([
                 'search' => [
                     ['id' => 'Q4938', 'label' => 'acetone'],
                 ],
             ])),
-            new MockResponse(json_encode([
+            new MockResponse((string) json_encode([
                 'entities' => [
                     'Q4938' => [
                         'labels' => [
@@ -86,7 +86,7 @@ class WikiDataSubstanceLoaderTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $loader = new WikiDataSubstanceLoader($em, $statementRepo, $symbolRepo, $httpClient, new NullLogger());
+        $loader = new WikiDataSubstanceLoader($statementRepo, $symbolRepo, $httpClient, new NullLogger());
 
         $substance = $loader->loadSubstance('acetone');
 

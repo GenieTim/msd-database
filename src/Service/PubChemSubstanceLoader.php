@@ -31,7 +31,6 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
     private const string CAS_REGEX = '/^\d{2,7}-\d{2}-\d$/';
 
     public function __construct(
-        private readonly EntityManagerInterface $em,
         private readonly SubstanceRepository $substanceRepo,
         private readonly StatementRepository $statementRepo,
         private readonly SymbolRepository $symbolRepo,
@@ -372,14 +371,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             return null;
         }
 
-        $symbol = $this->symbolRepo->findOneBy(['name' => $name]);
-        if (!$symbol instanceof \App\Entity\Symbol) {
-            $symbol = new Symbol();
-            $symbol->setName($name);
-            $this->em->persist($symbol);
-        }
-
-        return $symbol;
+        return $this->symbolRepo->findOrCreate($name);
     }
 
     /**
@@ -392,20 +384,7 @@ class PubChemSubstanceLoader implements SubstanceLoaderInterface
             return null;
         }
 
-        $statement = $this->statementRepo->findOneBy(['name' => $name]);
-        if (!$statement instanceof \App\Entity\Statement) {
-            $statement = new Statement();
-            $statement->setName($name);
-            $statement->setType($type);
-            if (!empty($description)) {
-                $statement->setDescription($description);
-            }
-            $this->em->persist($statement);
-        } elseif ($description !== null && ($statement->getDescription() === null || $statement->getDescription() === '')) {
-            $statement->setDescription($description);
-        }
-
-        return $statement;
+        return $this->statementRepo->findOrCreate($name, $description, $type);
     }
 
     /**

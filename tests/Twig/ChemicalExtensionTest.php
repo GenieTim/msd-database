@@ -45,4 +45,22 @@ class ChemicalExtensionTest extends TestCase
         $this->assertStringContainsString('bg-warning', $extension->getSignalWordBadgeClass('Warning'));
         $this->assertStringContainsString('bg-secondary', $extension->getSignalWordBadgeClass(null));
     }
+
+    public function testFormatChemicalFormula(): void
+    {
+        $extension = new ChemicalExtension();
+        $this->assertSame('HNO<sub>3</sub>', $extension->formatChemicalFormula('HNO3'));
+        $this->assertSame('C<sub>2</sub>H<sub>6</sub>O', $extension->formatChemicalFormula('C2H6O'));
+        $this->assertSame('Ca(OH)<sub>2</sub>', $extension->formatChemicalFormula('Ca(OH)2'));
+        $this->assertSame('', $extension->formatChemicalFormula(null));
+    }
+
+    public function testFormatPrettyJson(): void
+    {
+        $extension = new ChemicalExtension();
+        $json = '{"name":"Nitric Acid","synonyms":["a","b","c","d"]}';
+        $formatted = $extension->formatPrettyJson($json, 2);
+        $this->assertStringContainsString('"Nitric Acid"', $formatted);
+        $this->assertStringContainsString('... (2 more items)', $formatted);
+    }
 }

@@ -19,7 +19,7 @@ if (file_exists(dirname(__DIR__).'/config/bootstrap.php')) {
 // Ensure build directory and dummy entrypoints exist for Webpack Encore
 $buildDir = dirname(__DIR__).'/public/build';
 if (!is_dir($buildDir)) {
-    @mkdir($buildDir, 0777, true);
+    @mkdir($buildDir, 0775, true);
 }
 if (!file_exists($buildDir.'/entrypoints.json')) {
     @file_put_contents($buildDir.'/entrypoints.json', json_encode(['entrypoints' => ['app' => ['js' => [], 'css' => []]]]));
@@ -28,7 +28,7 @@ if (!file_exists($buildDir.'/entrypoints.json')) {
 // Ensure var directory exists and SQLite test database schema is created
 $varDir = dirname(__DIR__).'/var';
 if (!is_dir($varDir)) {
-    @mkdir($varDir, 0777, true);
+    @mkdir($varDir, 0775, true);
 }
 
 passthru(sprintf('php "%s/bin/console" doctrine:schema:update --force --complete --env=test --no-interaction 2>/dev/null', dirname(__DIR__)));

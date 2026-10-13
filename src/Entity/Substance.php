@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Service\SigmaAldrichSubstanceLoader;
+use App\Util\StringCleaner;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: \App\Repository\SubstanceRepository::class)]
-#[ORM\Table]
+#[ORM\Table(name: 'substance')]
 #[ORM\Index(name: 'substance_name_idx', columns: ['name'])]
 #[ORM\Index(name: 'substance_formula_idx', columns: ['formula'])]
 #[ORM\Index(name: 'substance_cas_idx', columns: ['cas_number'])]
 #[ORM\Index(name: 'substance_pubchem_idx', columns: ['pubchem_id'])]
+#[ORM\Index(name: 'substance_inchikey_idx', columns: ['inchikey'])]
 class Substance
 {
     #[ORM\Id]
@@ -106,7 +107,7 @@ class Substance
 
     public function setName(?string $name): self
     {
-        $this->name = $name !== null ? trim($name, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->name = StringCleaner::trim($name);
 
         return $this;
     }
@@ -118,7 +119,7 @@ class Substance
 
     public function setFormula(?string $formula): self
     {
-        $this->formula = $formula !== null ? trim($formula, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->formula = StringCleaner::trim($formula);
 
         return $this;
     }
@@ -239,7 +240,7 @@ class Substance
 
     public function setRidadr(?string $ridadr): self
     {
-        $this->ridadr = $ridadr !== null ? trim($ridadr, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->ridadr = StringCleaner::trim($ridadr);
 
         return $this;
     }
@@ -263,7 +264,7 @@ class Substance
 
     public function setRtecs(?string $rtecs): self
     {
-        $this->rtecs = $rtecs !== null ? trim($rtecs, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->rtecs = StringCleaner::trim($rtecs);
 
         return $this;
     }
@@ -323,7 +324,7 @@ class Substance
 
     public function setInchiKey(?string $inchikey): self
     {
-        $this->inchikey = $inchikey !== null ? trim($inchikey, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->inchikey = StringCleaner::trim($inchikey);
 
         return $this;
     }
@@ -335,7 +336,7 @@ class Substance
 
     public function setBoilingPoint(?string $boiling_point): self
     {
-        $this->boiling_point = $boiling_point !== null ? trim($boiling_point, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->boiling_point = StringCleaner::trim($boiling_point);
 
         return $this;
     }
@@ -347,7 +348,7 @@ class Substance
 
     public function setMeltingPoint(?string $melting_point): self
     {
-        $this->melting_point = $melting_point !== null ? trim($melting_point, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->melting_point = StringCleaner::trim($melting_point);
 
         return $this;
     }
@@ -359,7 +360,7 @@ class Substance
 
     public function setDensity(?string $density): self
     {
-        $this->density = $density !== null ? trim($density, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS) : null;
+        $this->density = StringCleaner::trim($density);
 
         return $this;
     }
@@ -380,7 +381,7 @@ class Substance
         if ($synonyms !== null) {
             $cleaned = [];
             foreach ($synonyms as $s) {
-                $trimmed = trim((string) $s, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+                $trimmed = StringCleaner::clean((string) $s);
                 if ($trimmed !== '') {
                     $cleaned[] = $trimmed;
                 }
@@ -395,7 +396,7 @@ class Substance
 
     public function addSynonym(string $synonym): self
     {
-        $trimmed = trim($synonym, SigmaAldrichSubstanceLoader::TRIM_CHARACTERS);
+        $trimmed = StringCleaner::clean($synonym);
         if ($trimmed !== '') {
             $this->synonyms ??= [];
             if (!in_array($trimmed, $this->synonyms, true)) {

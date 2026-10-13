@@ -27,6 +27,8 @@ class ApiControllerTest extends WebTestCase
         $client->request('GET', '/api/json/substance?search=ethanol');
 
         $this->assertResponseIsSuccessful();
+        $this->assertResponseHeaderSame('Content-Type', 'application/json; charset=UTF-8');
+        $this->assertResponseHeaderSame('X-Content-Type-Options', 'nosniff');
         $this->assertStringContainsString('Ethanol', (string) $client->getResponse()->getContent());
     }
 
