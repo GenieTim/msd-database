@@ -1,15 +1,15 @@
 {
   "devDependencies": {
-    "@babel/core": "^8.0.7",
+    "@babel/core": "^8.0.9",
     "@babel/preset-env": "^8.0.7",
     "@symfony/webpack-encore": "^7.2.0",
     "husky": "^9.1.7",
     "jquery": "^4.0.0",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
-    "sass": "^1.105.1",
-    "sass-loader": "^17.0.1",
-    "webpack": "^5.111.1",
+    "sass": "^1.106.1",
+    "sass-loader": "^17.1.0",
+    "webpack": "^5.112.2",
     "webpack-cli": "^7.2.3"
   },
   "license": "GPL-3.0-or-later",
